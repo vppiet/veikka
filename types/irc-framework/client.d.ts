@@ -2,7 +2,7 @@ import {EventEmitter} from 'eventemitter3';
 import MiddlewareHandler from 'middleware-handler';
 import {IrcCommandHandler} from './commands/';
 import IrcMessage from './ircmessage';
-import Connection from './connection';
+import {default as Connection, ConnectionOptions} from './connection';
 import NetworkInfo from './networkinfo';
 import User from './user';
 import Channel from './channel';
@@ -11,10 +11,12 @@ import * as MessageTags from './messagetags';
 
 type Tags = unknown;
 
-interface IrcClientOptions {
+export interface IrcClientOptions {
     nick?: string;
     username?: string;
     gecos?: string;
+    host?: string;
+    port?: number;
     encoding?: string;
     version?: string;
     enable_chghost?: boolean;
@@ -69,7 +71,7 @@ export default class IrcClient extends EventEmitter {
     connected: boolean;
     requestCap(cap: string | Array<string>): void;
     use(middleware_fn: Middleware): this;
-    connect(options?: IrcClientOptions): void;
+    connect(options?: ConnectionOptions): void;
     proxyIrcEvents(): void;
     addCommandHandlerListeners(): void;
     registerToNetwork(): void;
@@ -93,4 +95,5 @@ export default class IrcClient extends EventEmitter {
     ctcpResponse(target: string, type: string, ...paramN: string[]): void;
     action(target: string, message: string): Array<string>;
     whois(nick: string, cb: (event: any) => void): void; // event?
+    matchMessage(match_regex: RegExp, cb: (event: any) => void): void; // event?
 }
