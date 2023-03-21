@@ -2,9 +2,9 @@
   "name": "veikka",
   "version": "0.1.0",
   "description": "Veikka The IRC Bot",
-  "main": "dist/veikka.js",
+  "main": "dist/deploy.js",
   "scripts": {
-    "start": "npm run build && node dist/veikka.js",
+    "start": "npm run build && node dist/deploy.js",
     "build": "npx tsc",
     "dev": "npx nodemon",
     "test": "cross-env NODE_OPTIONS=--experimental-vm-modules npx jest"
@@ -16,9 +16,11 @@
   "author": "Ville Pietarinen",
   "license": "MIT",
   "dependencies": {
+    "@types/lodash-es": "^4.17.7",
     "axios": "^1.3.4",
     "cross-env": "^7.0.3",
-    "irc-framework": "^4.13.1"
+    "irc-framework": "^4.13.1",
+    "lodash-es": "^4.17.21"
   },
   "devDependencies": {
     "@definitelytyped/dtslint": "^0.0.151",
