@@ -23,7 +23,7 @@ export default {
     collectCoverage: true,
 
     // An array of glob patterns indicating a set of files for which coverage information should be collected
-    collectCoverageFrom: ["src/**/*.ts"],
+    // collectCoverageFrom: ["<rootDir>/src/**/*.ts"],
 
     // The directory where Jest should output its coverage files
     coverageDirectory: 'coverage',
@@ -52,6 +52,8 @@ export default {
 
     // Make calling deprecated APIs throw helpful error messages
     // errorOnDeprecated: false,
+
+    extensionsToTreatAsEsm: ['.ts'],
 
     // The default configuration for fake timers
     // fakeTimers: {
@@ -103,7 +105,7 @@ export default {
     // notifyMode: "failure-change",
 
     // A preset that is used as a base for Jest's configuration
-    preset: 'ts-jest',
+    preset: 'ts-jest/presets/default-esm',
 
     // Run tests from one or more projects
     // projects: undefined,
@@ -127,9 +129,7 @@ export default {
     // rootDir: undefined,
 
     // A list of paths to directories that Jest should use to search for files in
-    roots: [
-      "<rootDir>/tests/"
-    ],
+    // roots: [],
 
     // Allows you to use a custom runner instead of Jest's default test runner
     // runner: "jest-runner",
@@ -156,10 +156,9 @@ export default {
     // testLocationInResults: false,
 
     // The glob patterns Jest uses to detect test files
-    // testMatch: [
-    //   "**/__tests__/**/*.[jt]s?(x)",
-    //   "**/?(*.)+(spec|test).[tj]s?(x)"
-    // ],
+    testMatch: [
+      "**/__tests__/**/?(*.)?(i)+(spec).[tj]s?(x)"
+    ],
 
     // An array of regexp pattern strings that are matched against all test paths, matched tests are skipped
     // testPathIgnorePatterns: [
@@ -176,7 +175,14 @@ export default {
     // testRunner: "jest-circus/runner",
 
     // A map from regular expressions to paths to transformers
-    transform: {},
+    transform: {
+      '^.+\\.tsx?$': [
+        'ts-jest',
+        {
+          useESM: true,
+        }
+      ]
+    },
 
     // An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation
     // transformIgnorePatterns: [

@@ -1,4 +1,10 @@
-export {default as Client} from './client';
+export {
+    default as Client,
+    IrcMiddleware,
+    IrcMiddlewareHandler,
+    RegisteredEvent,
+    PrivMsgEvent,
+} from './client';
 
 export {default as ircLineParser} from './irclineparser';
 export {default as Message} from './ircmessage';

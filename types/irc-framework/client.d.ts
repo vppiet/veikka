@@ -52,7 +52,21 @@ export interface IrcClientOptions {
     },
 }
 
-type Middleware = (client: IrcClient, ) => void; // !!!
+export type RegisteredEvent = {nick: string};
+export type PrivMsgEvent = {
+    nick: string,
+    ident: string,
+    hostname: string,
+    target: string,
+    message: string,
+    tags: Array<string>,
+    time: number,
+};
+
+type IrcEvent = RegisteredEvent | PrivMsgEvent;
+
+export type IrcMiddleware = (client: IrcClient, raw_events: MiddlewareHandler, parsed_events: MiddlewareHandler) => void;
+export type IrcMiddlewareHandler = (command: string, event: IrcEvent, client: IrcClient, next: () => void) => void;
 
 export default class IrcClient extends EventEmitter {
     constructor(options?: IrcClientOptions);
@@ -70,7 +84,7 @@ export default class IrcClient extends EventEmitter {
     command_handler: IrcCommandHandler;
     connected: boolean;
     requestCap(cap: string | Array<string>): void;
-    use(middleware_fn: Middleware): this;
+    use(middleware_fn: (...args: any[]) => void): this;
     connect(options?: ConnectionOptions): void;
     proxyIrcEvents(): void;
     addCommandHandlerListeners(): void;

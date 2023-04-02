@@ -1,5 +1,14 @@
+import dotenv from 'dotenv';
 import {Client} from 'irc-framework';
-import {IrcClientOptions} from '../types/irc-framework/client';
+import {Logger} from 'winston';
+
+import {setDefaultEnvironment} from './environment.js';
+import {IrcClientOptions} from '../types/irc-framework/client.js';
+import {MiddlewareRegister} from './middlewareRegister.js';
+import {getLogger} from './logger.js';
+
+dotenv.config();
+setDefaultEnvironment();
 
 type VeikkaOptions = Pick<IrcClientOptions, 'nick' | 'username' | 'gecos'>;
 
@@ -14,6 +23,8 @@ interface VeikkaConnectionOptions {
 class Veikka {
     protected options?: VeikkaOptions;
     protected client: Client;
+    protected middlewareRegister: MiddlewareRegister;
+    public log: Logger;
 
     static readonly DEFAULT_OPTIONS: VeikkaOptions = {
         nick: 'veikka',
@@ -27,24 +38,35 @@ class Veikka {
      */
     constructor(options?: VeikkaOptions) {
         this.options = options;
-        this.client = new Client();
         this.setDefaultOptions();
+
+        this.client = new Client(this.options);
+        this.middlewareRegister = new MiddlewareRegister();
+        this.log = getLogger('veikka');
     }
 
     /**
      * Connects to the IRC server.
-     * @param {VeikkaConnectionOptions} connectionOptions Connection options
+     * @param {VeikkaConnectionOptions} opts Connection options
      */
-    connect(connectionOptions: VeikkaConnectionOptions): void {
-        return;
+    connect(opts: VeikkaConnectionOptions): void {
+        this.client.connect({...this.options, ...opts});
+    }
+
+    getClient(): Client {
+        return this.client;
     }
 
     /**
      * Gets options.
-     * @return {void} Options
+     * @return {VeikkaOptions?} Options
      */
     getOptions(): VeikkaOptions | undefined {
         return this.options;
+    }
+
+    getRegister(): MiddlewareRegister {
+        return this.middlewareRegister;
     }
 
     /**
@@ -55,7 +77,9 @@ class Veikka {
         return this.client.connected;
     }
 
-    /** Sets default options for nick, gecos, and username. */
+    /**
+     * Sets default options for nick, gecos, and username.
+     */
     protected setDefaultOptions(): void {
         if (!this.options) {
             this.options = {};
@@ -65,16 +89,12 @@ class Veikka {
             Array<keyof typeof Veikka.DEFAULT_OPTIONS>;
 
         for (const prop of props) {
-            if (Object.hasOwn(this.options, prop)) {
-                this.options[prop] = this.options[prop] ?
-                    this.options[prop] : Veikka.DEFAULT_OPTIONS[prop];
-            } else {
-                this.options[prop] = Veikka.DEFAULT_OPTIONS[prop];
-            }
+            this.options[prop] = this.options[prop] ?
+                this.options[prop] : Veikka.DEFAULT_OPTIONS[prop];
         }
 
         return;
     }
 }
 
-export {VeikkaOptions, Veikka};
+export {VeikkaOptions, VeikkaConnectionOptions, Veikka};

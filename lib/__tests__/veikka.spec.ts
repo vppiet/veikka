@@ -1,4 +1,6 @@
-import {VeikkaOptions, Veikka} from '../lib/veikka';
+import {describe, test, expect} from '@jest/globals';
+
+import {VeikkaOptions, Veikka} from '../veikka';
 
 describe('veikka module', () => {
     describe('Veikka class', () => {

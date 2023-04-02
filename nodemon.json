@@ -6,10 +6,10 @@
     ],
     "verbose": true,
     "execMap": {
-        "ts": "ts-node --esm"
+        "ts": "ts-node"
     },
     "watch": [
-        "src/**/*"
+        "lib/**/*"
     ],
     "env": {
         "NODE_ENV": "development"
