@@ -1,5 +1,15 @@
-import {getLogger} from './logger.js';
+type Fish = {swim(): void};
+type Bird = {fly(): void};
 
-const log = getLogger('playground');
+function isFish(pet: Fish | Bird): pet is Fish {
+    return (pet as Fish).swim !== undefined;
+}
 
-log.info({model: 'Civic', year: 1994});
+
+function main(pet: Fish | Bird) {
+    if (isFish(pet)) {
+        pet.swim();
+    } else {
+        pet.fly();
+    }
+}

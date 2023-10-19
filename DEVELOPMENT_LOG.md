@@ -37,3 +37,35 @@ Did some initial work on middlewares. MiddlewareRegister a bit too mucho aka ove
 Getting a child logger is in place now. One middleware works.
 
 RegistrationEvent and PrivMsgEvent are defined. They should be defined in their right own files, though. `commands/handlers/` or somewhere.
+
+## 2023-04-02
+
+Hmm, let's simplify *irc-framework's* types: all in index.d.ts and use only whatever is client-side API!
+
+Middleware types are confusing. Figure it out.
+
+Continue: IrcClient.rawString()
+
+## 2023-08-13
+
+I linked *irc-framework's* types symbolically with `npm link`. It installs it as a global module so that I can use the types while developing them.
+
+TODO: Variadic tuple types for IrcClient.whois()
+
+## 2023-09-05
+
+Options constructor parameter as {nick: <nick>} is overwritten. Fix: use either constructor or connect method to pass options.
+
+## 2023-10-11
+
+Back to tinkering. Let's just send it, get a working POC. Migrated to Bun to test new dev things. It might be a great alternative to Node/Jest/nodemon bundle for such a small project.
+
+HLTV RSS would be nice: a channel subcribes into the news, bot polls the RSS file once in a while, and sends a message when a new news item is available.
+
+## 2023-10-15
+
+Of the rails, again. Now working on auto cmd authorization for Qnet. Next: admin commands (quit). Got this when exiting the program forcefully:
+
+`{"level":"info","message":{"command":"irc error","event":{"error":"irc","reason":"Your host is trying to (re)connect too fast -- throttled"}},"module":"logPlugin","timestamp":"2023-10-14T22:45:26.251Z"}`
+
+So let's get it go down gracefully, so the server is happy, too.

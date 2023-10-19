@@ -4,3 +4,4 @@ dist/
 logs/
 .env
 .vscode/
+lib/playground.ts

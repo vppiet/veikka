@@ -1,8 +1,7 @@
 import {createLogger, format, transports} from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 
-const level = process.env['VEIKKA_LOG_LEVEL'] ?
-    process.env['VEIKKA_LOG_LEVEL']: 'info';
+const LEVEL = Bun.env['VEIKKA_LOG_LEVEL'] ?? 'info';
 
 const console = new transports.Console();
 const file = new DailyRotateFile({
@@ -15,12 +14,12 @@ const rootLogger = createLogger({
         format.timestamp(),
         format.json(),
     ),
-    level: level,
+    level: LEVEL,
     transports: [console, file],
 });
 
-function getLogger(name: string) {
-    return rootLogger.child({module: name});
+function getLogger(name: string, path?: string) {
+    return rootLogger.child({module: name, path: path});
 }
 
 export {getLogger};

@@ -1,16 +1,30 @@
-import {Veikka} from './lib/veikka.js';
-import {registrationMiddleware}
-    from './lib/middlewares/registrationMiddleware.js';
-import {greetingMiddleware}
-    from './lib/middlewares/greetingMiddleware.js';
-import {loggingMiddleware}
-    from './lib/middlewares/loggingMiddleware.js';
+import {Veikka} from './lib/veikka';
+import {LogMiddleware} from './lib/plugins/logPlugin';
+import {QuitCommand} from './lib/commands/quitCommand';
+import {QuakeNetRegister} from './lib/plugins/quakeNetPlugin';
 
 const veikka = new Veikka();
-const client = veikka.getClient();
 
-client.use(loggingMiddleware());
-client.use(registrationMiddleware());
-client.use(greetingMiddleware());
+// NETWORK
+const qnet = new QuakeNetRegister();
+qnet.addAutoJoin('#botlab');
+veikka.addListener(qnet.getEventName(), qnet.listener, {client: veikka, listener: qnet});
 
-veikka.connect({host: 'localhost', port: 6667});
+// PLUGINS
+veikka.use(new LogMiddleware().middleware());
+veikka.addCommand(new QuitCommand('.', 'quit'));
+
+// CONNECTION
+veikka.connect({
+    nick: 'Veikka',
+    username: 'Veikka',
+    gecos: 'Veikka',
+    host: 'stockholm.se.quakenet.org',
+    port: 6667,
+});
+
+// LOCAL
+// veikka.addAutojoin('#botlab');
+// veikka.addRequiredCompletionListener(new QuakeNetRegister());
+// veikka.addCommand(new QuitCommand('.', 'quit'));
+// veikka.connect({nick: 'veikka', username: 'veikka', host: 'puskavattu.home', port: 6667});
