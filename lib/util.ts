@@ -1,17 +1,15 @@
 import {IrcEvent, MiddlewareHandler, User} from 'irc-framework';
 import {Veikka} from 'veikka';
 
-type Closeable = {
-    close(): void;
+type Context<L> = {
+    client: Veikka;
+    listener: L;
 };
 
-type Initialisable = {
-    initialise(): void;
-};
-
-type IrcMiddleware = {
-    middleware(): void;
-}
+const INTERVAL = {
+    MINUTE: 1000 * 60,
+    HOUR: 1000 * 60 * 60,
+} as const;
 
 function isEventType<T extends IrcEvent>(actualCmd: string, expectedCmd: string,
     event: IrcEvent): event is T {
@@ -31,8 +29,8 @@ function isAdmin(ident: string, hostname: string) {
 }
 
 export {
-    Closeable,
-    Initialisable,
+    Context,
+    INTERVAL,
     isEventType,
     useParsedEvents,
     isAdmin,

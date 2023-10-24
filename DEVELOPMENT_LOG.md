@@ -69,3 +69,9 @@ Of the rails, again. Now working on auto cmd authorization for Qnet. Next: admin
 `{"level":"info","message":{"command":"irc error","event":{"error":"irc","reason":"Your host is trying to (re)connect too fast -- throttled"}},"module":"logPlugin","timestamp":"2023-10-14T22:45:26.251Z"}`
 
 So let's get it go down gracefully, so the server is happy, too.
+
+## 2023-10-23
+
+TODO: clear timers before shutdown
+
+Done.

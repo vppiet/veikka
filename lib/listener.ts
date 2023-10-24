@@ -5,8 +5,4 @@ type IrcEventListener = {
     listener(event: IrcEvent): void;
 };
 
-type Prioritized = {
-    isReady(): boolean;
-};
-
-export {IrcEventListener, Prioritized};
+export {IrcEventListener};
