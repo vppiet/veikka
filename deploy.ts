@@ -1,32 +1,22 @@
 import {Veikka} from './lib/veikka';
 import {LogMiddleware} from './lib/plugins/logPlugin';
+import {HelpCommand} from './lib/commands/helpCommand';
 import {QuitCommand} from './lib/commands/quitCommand';
 import {JoinCommand} from './lib/commands/joinCommand';
-import {QuakeNetRegister} from './lib/plugins/quakeNetPlugin';
+import {ReminderCommand} from './lib/commands/reminderCommand';
 
-import {HltvPublisher} from './lib/publishers/hltvPublisher';
+const veikka = await Veikka.create();
 
-const veikka = new Veikka();
-
-// NETWORK
-// const qnet = new QuakeNetRegister();
-// qnet.addAutoJoin('#botlab');
-// veikka.addListener(qnet.getEventName(), qnet.listener, {client: veikka, listener: qnet});
-
-// PLUGINS
 veikka.use(new LogMiddleware().middleware());
-veikka
+veikka.addCommand(new HelpCommand())
     .addCommand(new QuitCommand())
     .addCommand(new JoinCommand())
-    .addPublisher(new HltvPublisher().addSubscription('#botlab'));
-// .addPublisher(new YlePublisher().addSubscription('#botlab'));
+    .addCommand(new ReminderCommand());
 
-// CONNECTION
 veikka.connect({
-    nick: 'Veikka',
-    username: 'Veikka',
-    gecos: 'Veikka Bot (admin: SluvE)',
-    // host: 'stockholm.se.quakenet.org',
-    host: 'puskavattu.home',
-    port: 6667,
+    nick: Bun.env['NICK'],
+    username: Bun.env['USERNAME'],
+    gecos: Bun.env['GECOS'],
+    host: Bun.env['SERVER_HOST'],
+    port: Number(Bun.env['SERVER_PORT']) || 6667,
 });

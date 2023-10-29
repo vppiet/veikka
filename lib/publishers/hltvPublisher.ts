@@ -33,30 +33,29 @@ class HltvPublisher implements Publisher {
 
     async startTimer(client: Veikka) {
         this.cache = await this.getFeed();
-        const cache = this.cache;
 
-        this.timer = setInterval(async () => {
+        if (!this.cache || this.cache.items.length === 0) {
+            throw new Error('Unable to fetch URL');
+        }
+
+        const handler = async () => {
             const feed = await this.getFeed();
-
-            if (!this.cache || this.cache.items.length === 0) {
-                this.stopTimer();
-                throw new Error('Cache was undefined');
-            }
-
-            const i = feed.items.findIndex((i) => i.guid === cache.items[0].guid);
+            const i = feed.items.findIndex((i) => {
+                if (!this.cache) return true;
+                return i.guid === this.cache.items[0].guid;
+            });
 
             if (i === -1) {
-                this.subscriptions.forEach((s) => {
-                    client.say(s,
-                        `HLTV | ${feed.items[0].title || 'No title'} | ${feed.link || 'No link'}`);
-                });
+                this.publish(client, feed.items[0]);
             } else {
                 const newItems = feed.items.slice(0, i);
                 newItems.forEach((ni) => this.publish(client, ni));
             }
 
             this.cache = feed;
-        }, INTERVAL.HOUR);
+        };
+
+        this.timer = setInterval(handler, INTERVAL.HOUR, this);
     }
 
     publish(client: Veikka, item: Parser.Item) {

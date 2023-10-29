@@ -1,21 +1,17 @@
 import {NoticeEvent, RegisteredEvent, DisplayedHostEvent} from 'irc-framework';
 
+import {Context} from '../util';
 import {Veikka} from 'veikka';
 import {IrcEventListener} from 'listener';
 
-type Context = {
-    client: Veikka;
-    listener: QuakeNetRegister;
-};
-
-class QuakeNetRegister implements IrcEventListener {
+class RegisteredListener implements IrcEventListener {
     autojoinChannels: string[] = [];
 
     getEventName() {
         return 'registered';
     }
 
-    listener(this: Context, event: RegisteredEvent) {
+    listener(this: Context<RegisteredListener>, event: RegisteredEvent) {
         this.client.addListener('notice', this.listener.noticeListener, this);
         this.client.say(
             'Q@CServe.quakenet.org',
@@ -23,7 +19,7 @@ class QuakeNetRegister implements IrcEventListener {
         );
     }
 
-    noticeListener(this: Context, event: NoticeEvent) {
+    noticeListener(this: Context<RegisteredListener>, event: NoticeEvent) {
         if (event.message.startsWith('You are now logged in as ') &&
         event.ident == 'TheQBot' &&
         event.hostname === 'CServe.quakenet.org') {
@@ -33,7 +29,7 @@ class QuakeNetRegister implements IrcEventListener {
         }
     }
 
-    displayedHostListener(this: Context, event: DisplayedHostEvent) {
+    displayedHostListener(this: Context<RegisteredListener>, event: DisplayedHostEvent) {
         if (event.hostname.endsWith('.users.quakenet.org')) {
             this.client.removeListener('displayed host', this.listener.displayedHostListener);
             this.client.removeListener(this.listener.getEventName(), this.listener.listener);
@@ -43,14 +39,10 @@ class QuakeNetRegister implements IrcEventListener {
         }
     }
 
-    autojoin(this: Context) {
+    autojoin(this: Context<RegisteredListener>) {
         this.listener.autojoinChannels.forEach((c) => this.client.join(c));
         this.client.removeListener('ready for autojoin', this.listener.autojoin);
     }
-
-    addAutoJoin(...channels: string[]) {
-        this.autojoinChannels.push(...channels);
-    }
 }
 
-export {QuakeNetRegister};
+export {RegisteredListener as QuakeNetRegister};

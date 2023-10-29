@@ -75,3 +75,23 @@ So let's get it go down gracefully, so the server is happy, too.
 TODO: clear timers before shutdown
 
 Done.
+
+## 2023-10-24
+
+Bug: HLTVPublisher publishes same latest story every hour
+
+## 2023-10-25
+
+Testing HLTVPublisher bug fix ^^
+
+TODO:
+- ReminderCommand
+- SQLite integration
+
+## 2023-10-29
+
+Great progress this week.
+
+TODO:
+- move irc-framework types to a folder and map types in in tsconfig.json
+- reminder functionality

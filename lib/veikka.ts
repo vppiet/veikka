@@ -1,26 +1,31 @@
-import {Channel, Client, IrcClientOptions, JoinEvent} from 'irc-framework';
+import {Database} from 'bun:sqlite';
+import {Channel, Client, IrcClientOptions} from 'irc-framework';
 
 import {Command} from './command';
 import {Publisher} from './publisher';
+import coreListeners from './coreListeners';
 
 class Veikka extends Client {
+    db: Database;
     commands: Command[] = [];
     channels: Channel[] = [];
     publishers: Publisher[] = [];
 
-    constructor(options?: IrcClientOptions) {
+    private constructor(db: Database, options?: IrcClientOptions) {
         super(options);
-        this.addListener('join', this._joinListener);
-        this.addListener('socket close', this._socketCloseListener);
+        this.db = db;
+        this.addCoreListeners();
     }
 
-    _joinListener(event: JoinEvent) {
-        if (event.nick !== this.user.nick) return;
-        this.channels.push(this.channel(event.channel));
-    }
+    static async create(options?: IrcClientOptions) {
+        const db = new Database('db.sqlite', {create: true});
+        db.exec('PRAGMA journal_mode = WAL;');
+        db.exec('PRAGMA foreign_keys = ON;');
 
-    _socketCloseListener() {
-        this.publishers.forEach((p) => p.stopTimer());
+        const schema = await Bun.file('./lib/schema.sql').text();
+        db.exec(schema);
+
+        return new Veikka(db, options);
     }
 
     addCommand(...cmds: Command[]) {
@@ -37,6 +42,13 @@ class Veikka extends Client {
         this.publishers.push(publisher);
 
         return this;
+    }
+
+    private addCoreListeners() {
+        for (const CoreListener of coreListeners) {
+            const l = new CoreListener();
+            this.addListener(l.getEventName(), l.listener, {client: this, listener: l});
+        }
     }
 }
 

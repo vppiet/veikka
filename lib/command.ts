@@ -8,18 +8,20 @@ const PRIVILEGE_LEVEL = {
     ADMIN: 2,
 } as const;
 
+const PARAM_SEP = ', ';
+
 abstract class Command implements IrcEventListener {
     readonly prefix: string;
     readonly name: string;
     readonly privilegeLevel: number;
-    readonly parameters: number;
+    readonly paramCount: number;
 
     constructor(prefix: string, name: string, privilegeLevel: number = PRIVILEGE_LEVEL.USER,
-        parameters = 0) {
+        paramCount = 0) {
         this.prefix = prefix;
         this.name = name;
         this.privilegeLevel = privilegeLevel;
-        this.parameters = parameters;
+        this.paramCount = paramCount;
     }
 
     abstract getEventName(): string;
@@ -30,19 +32,38 @@ abstract class Command implements IrcEventListener {
     }
 
     match(str: string, ident?: string, hostname?: string) {
-        str = str.trim().toLowerCase();
+        str = str.trimStart().toLowerCase();
         const cmd = this.getPrefixedName().toLowerCase();
 
         if (!str.startsWith(cmd)) return;
+
+        // next possible character is a space
+        if (str.length > cmd.length && !(str[cmd.length] === ' ')) return;
+
         if (this.privilegeLevel === PRIVILEGE_LEVEL.ADMIN) {
             if (ident === undefined || hostname === undefined) return;
             if (!isAdmin(ident, hostname)) return;
         }
 
-        const params = str.split(' ');
+        const params = str.slice(this.getPrefixedName().length)
+            .split(PARAM_SEP);
 
-        return params.length - 1 === this.parameters;
+        return params.length >= this.paramCount;
+    }
+
+    // https://stackoverflow.com/a/5582719
+    parseParameters(message: string) {
+        if (this.paramCount === 0) return [];
+
+        const parts = message.trimStart()
+            .slice(this.getPrefixedName().length)
+            .split(PARAM_SEP);
+        const tail = parts.slice(this.paramCount).join(PARAM_SEP);
+        const result = parts.slice(0, this.paramCount);
+        if (tail) result.push(tail);
+
+        return result.map((e) => e.trim());
     }
 }
 
-export {PRIVILEGE_LEVEL, Command};
+export {PRIVILEGE_LEVEL, PARAM_SEP, Command};

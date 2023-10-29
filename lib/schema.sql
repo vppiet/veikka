@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS reminders(
+    id INTEGER PRIMARY KEY,
+    nick TEXT NOT NULL,
+    datetime TEXT NOT NULL
+);

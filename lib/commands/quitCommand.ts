@@ -4,7 +4,7 @@ import {Veikka} from 'veikka';
 
 class QuitCommand extends Command {
     constructor() {
-        super('.', 'quit', PRIVILEGE_LEVEL.ADMIN);
+        super('.', 'sulje', PRIVILEGE_LEVEL.ADMIN);
     }
 
     getEventName(): string {

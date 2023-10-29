@@ -4,7 +4,7 @@ import {Veikka} from 'veikka';
 
 class JoinCommand extends Command {
     constructor() {
-        super('.', 'join', PRIVILEGE_LEVEL.ADMIN, 1);
+        super('.', 'liity', PRIVILEGE_LEVEL.ADMIN, 1);
     }
 
     getEventName(): string {
