@@ -23,12 +23,6 @@ class QuakenetHandler implements NetworkHandler {
         );
     }
 
-    /*
-    unsuccessful case:
-        12:23:09 -!- Irssi: Starting query in QuakeNet with Q@CServe.quakenet.org
-        12:23:09 <ville_> AUTH ville_ foobar
-        12:23:09 [QuakeNet] -Q(TheQBot@CServe.quakenet.org)- Username or password incorrect.
-    */
     noticeListener(this: Context<QuakenetHandler>, event: NoticeEvent) {
         if (event.ident === 'TheQBot' && event.hostname === 'CServe.quakenet.org') {
             if (event.message.startsWith('You are now logged in as ')) {

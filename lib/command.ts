@@ -51,10 +51,10 @@ abstract class Command implements IrcEventListener {
         return params.length >= this.paramCount;
     }
 
-    // https://stackoverflow.com/a/5582719
     parseParameters(message: string) {
         if (this.paramCount === 0) return [];
 
+        // https://stackoverflow.com/a/5582719
         const parts = message.trimStart()
             .slice(this.getPrefixedName().length)
             .split(PARAM_SEP);

@@ -94,4 +94,6 @@ Great progress this week.
 
 TODO:
 - move irc-framework types to a folder and map types in in tsconfig.json
-- reminder functionality
+- reminder functionality (parsing, saving, attaching listeners, resuming...)
+- logMiddleware/logPlugin situation (keep middleware, ditch plugins)
+
