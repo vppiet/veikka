@@ -1,10 +1,18 @@
-import {IrcEvent, MiddlewareHandler, User} from 'irc-framework';
+import {IrcEvent, MiddlewareHandler} from 'irc-framework';
 import {Veikka} from 'veikka';
 
 type Context<L> = {
     client: Veikka;
     listener: L;
 };
+
+type Initialisable = {
+    initialise(client: Veikka): void;
+};
+
+function isInitialisable(o: object): o is Initialisable {
+    return 'initialise' in o;
+}
 
 const INTERVAL = {
     MINUTE: 1000 * 60,
@@ -30,6 +38,8 @@ function isAdmin(ident: string, hostname: string) {
 
 export {
     Context,
+    Initialisable,
+    isInitialisable,
     INTERVAL,
     isEventType,
     useParsedEvents,

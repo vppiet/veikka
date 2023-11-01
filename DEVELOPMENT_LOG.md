@@ -93,7 +93,12 @@ TODO:
 Great progress this week.
 
 TODO:
-- move irc-framework types to a folder and map types in in tsconfig.json
-- reminder functionality (parsing, saving, attaching listeners, resuming...)
+- move irc-framework types to a folder and map types in in tsconfig.json (OK)
+- reminder functionality (parsing, saving, attaching listeners) (OK)
 - logMiddleware/logPlugin situation (keep middleware, ditch plugins)
 
+## 2023-10-31
+
+TODO:
+- command overloads & argument rework
+- initalizing & closing

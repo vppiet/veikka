@@ -3,6 +3,7 @@ import {Channel, Client, IrcClientOptions} from 'irc-framework';
 
 import {Command} from './command';
 import {Publisher} from './publisher';
+import {isInitialisable} from './util';
 import coreListeners from './coreListeners';
 
 class Veikka extends Client {
@@ -29,9 +30,15 @@ class Veikka extends Client {
     }
 
     addCommand(...cmds: Command[]) {
-        cmds.forEach((c) => this.addListener(c.getEventName(), c.listener,
-            {client: this, listener: c}));
-        cmds.forEach((c) => this.commands.push(c));
+        cmds.forEach((c) => {
+            this.addListener(c.getEventName(), c.listener, {client: this, listener: c});
+
+            if (isInitialisable(c)) {
+                c.initialise(this);
+            }
+
+            this.commands.push(c);
+        });
 
         return this;
     }

@@ -1,0 +1,7 @@
+{
+    "rules": {
+        "max-len": "off",
+        "spaced-comment": "off",
+        "@typescript-eslint/no-explicit-any": "off"
+    }
+}

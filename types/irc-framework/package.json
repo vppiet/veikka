@@ -1,0 +1,7 @@
+{
+    "name": "@types/irc-framework",
+    "private": true,
+    "dependencies": {
+        "eventemitter3": "^5.0.0"
+    }
+}

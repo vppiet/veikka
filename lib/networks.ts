@@ -17,10 +17,7 @@ class QuakenetHandler implements NetworkHandler {
         }
 
         client.addListener('notice', this.noticeListener, {client: client, listener: this});
-        client.say(
-            'Q@CServe.quakenet.org',
-            `AUTH ${user} ${pwd}`,
-        );
+        client.say('Q@CServe.quakenet.org', `AUTH ${user} ${pwd}`);
     }
 
     noticeListener(this: Context<QuakenetHandler>, event: NoticeEvent) {
