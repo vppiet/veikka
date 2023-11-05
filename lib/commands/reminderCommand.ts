@@ -1,9 +1,11 @@
 import {PrivMsgEvent} from 'irc-framework';
-import {milliseconds, parse, isValid, differenceInMilliseconds, isPast} from 'date-fns';
+import {milliseconds, parse, isValid, differenceInMilliseconds, isPast, addMilliseconds, parseISO}
+    from 'date-fns';
 
 import {Command, PRIVILEGE_LEVEL} from '../command';
 import {Context, Initialisable} from '../util';
 import {Veikka} from 'veikka';
+import {ReminderTable} from '../db/reminder';
 
 const FORMAT_DATETIME = 'dd.LL.yyyy HH.mm';
 
@@ -36,9 +38,10 @@ function parseDuration(str: string) {
 
 class ReminderCommand extends Command implements Initialisable {
     timers: Timer[] = [];
+    table?: ReminderTable;
 
     constructor() {
-        super('.', 'muistutus', PRIVILEGE_LEVEL.USER, 2);
+        super('.', 'muistutus', PRIVILEGE_LEVEL.USER, 1, 1);
     }
 
     getEventName(): string {
@@ -49,7 +52,9 @@ class ReminderCommand extends Command implements Initialisable {
         if (!this.listener.match(event.message)) return;
 
         const now = new Date();
-        const [reminderTime, reminderMsg] = this.listener.parseParameters(event.message);
+        const {req, opt} = this.listener.parseParameters(event.message);
+        const reminderTime = req[0];
+        const reminderMsg = opt[0];
 
         const duration = parseDuration(reminderTime);
         if (duration) {
@@ -61,13 +66,16 @@ class ReminderCommand extends Command implements Initialisable {
                 minutes: duration.m,
                 seconds: duration.s,
             });
-            this.listener.addTimer(event, reminderMsg, reminderTime, ms);
+            const insertResult = this.listener.table?.insertOne(event.nick, event.target,
+                now.toISOString(), addMilliseconds(now, ms).toISOString(), reminderMsg);
+            this.listener.addTimer(this.client, event.target, event.nick, ms, reminderMsg,
+                insertResult?.id);
             return;
         }
 
         const datetime = parse(reminderTime, FORMAT_DATETIME, now);
         if (!isValid(datetime.getTime())) {
-            event.reply(event.nick + ': Anna muistutuksen aika joko muodossa "1y2m3p4t5m6s"' +
+            event.reply(event.nick + ': Muistutuksen aika on oltava joko muodossa "1v2kk3p4t5m6s"' +
                 'tai "31.10.2023 15.56"');
             return;
         }
@@ -78,18 +86,36 @@ class ReminderCommand extends Command implements Initialisable {
         }
 
         const ms = differenceInMilliseconds(datetime, now);
-        this.listener.addTimer(event, reminderMsg, reminderTime, ms);
+        const insertResult = this.listener.table?.insertOne(event.nick, event.target,
+            now.toISOString(), datetime.toISOString(), reminderMsg);
+        this.listener.addTimer(this.client, event.target, event.nick, ms, reminderMsg,
+            insertResult?.id);
     }
 
-    addTimer(event: PrivMsgEvent, reminderMsg: string, reminderTime: string, ms: number) {
+    addTimer(client: Veikka, channel: string, nick: string, ms: number, reminderMsg?: string,
+        id?: number) {
         const timer = () => {
-            event.reply(`${event.nick}: ${reminderMsg} (muistutus ${reminderTime})`);
+            client.say(channel, `${nick}: ${reminderMsg || 'Muistutus'}`);
+            if (id) {
+                this.table?.deleteOne(id, nick, channel);
+            }
         };
+
         this.timers.push(setTimeout(timer, ms));
     }
 
     initialise(client: Veikka): void {
         client.addListener('socket close', this.clearTimers, this);
+        this.table = new ReminderTable(client.db);
+        this.table.deletePast();
+        const futureReminders = this.table.getFuture();
+        const now = new Date();
+        for (const reminder of futureReminders) {
+            const datetime = parseISO(reminder.reminder_datetime);
+            const ms = differenceInMilliseconds(datetime, now);
+            this.addTimer(client, reminder.channel, reminder.nick, ms, reminder.reminder_text,
+                reminder.id);
+        }
     }
 
     clearTimers() {

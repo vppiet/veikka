@@ -10,18 +10,29 @@ const PRIVILEGE_LEVEL = {
 
 const PARAM_SEP = ', ';
 
+type Parameter = {
+    required: boolean;
+    position: number;
+};
+
+type Parameters = {
+    [key: string]: Parameter,
+};
+
 abstract class Command implements IrcEventListener {
     readonly prefix: string;
     readonly name: string;
     readonly privilegeLevel: number;
-    readonly paramCount: number;
+    readonly reqParams: number;
+    readonly optParams: number;
 
     constructor(prefix: string, name: string, privilegeLevel: number = PRIVILEGE_LEVEL.USER,
-        paramCount = 0) {
+        reqParams = 0, optParams = 0) {
         this.prefix = prefix;
         this.name = name;
         this.privilegeLevel = privilegeLevel;
-        this.paramCount = paramCount;
+        this.reqParams = reqParams;
+        this.optParams = optParams;
     }
 
     abstract getEventName(): string;
@@ -45,24 +56,33 @@ abstract class Command implements IrcEventListener {
             if (!isAdmin(ident, hostname)) return;
         }
 
-        const params = str.slice(this.getPrefixedName().length)
-            .split(PARAM_SEP);
+        const params = str.slice(cmd.length)
+            .split(PARAM_SEP)
+            .map((p) => p.trim())
+            .filter((p) => p.length !== 0);
 
-        return params.length >= this.paramCount;
+        return params.length >= this.reqParams;
     }
 
     parseParameters(message: string) {
-        if (this.paramCount === 0) return [];
+        if (this.reqParams === 0) return {req: [], opt: []};
+
+        const paramCount = this.reqParams + this.optParams;
 
         // https://stackoverflow.com/a/5582719
         const parts = message.trimStart()
-            .slice(this.getPrefixedName().length)
+            .slice(this.getPrefixedName().length + 1)
             .split(PARAM_SEP);
-        const tail = parts.slice(this.paramCount).join(PARAM_SEP);
-        const result = parts.slice(0, this.paramCount);
-        if (tail) result.push(tail);
+        const tail = parts.slice(paramCount - 1).join(PARAM_SEP);
+        let params = parts.slice(0, paramCount - 1);
+        if (tail) params.push(tail);
 
-        return result.map((e) => e.trim());
+        params = params.map((p) => p.trim());
+
+        return {
+            req: params.slice(0, this.reqParams),
+            opt: params.slice(this.reqParams),
+        };
     }
 }
 

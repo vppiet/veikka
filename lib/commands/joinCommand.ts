@@ -1,6 +1,6 @@
 import {PrivMsgEvent} from 'irc-framework';
 import {Command, PRIVILEGE_LEVEL} from '../command';
-import {Veikka} from 'veikka';
+import {Context} from '../util';
 
 class JoinCommand extends Command {
     constructor() {
@@ -11,7 +11,7 @@ class JoinCommand extends Command {
         return 'privmsg';
     }
 
-    listener(this: {client: Veikka, listener: JoinCommand}, event: PrivMsgEvent): void {
+    listener(this: Context<JoinCommand>, event: PrivMsgEvent): void {
         if (!this.listener.match(event.message, event.ident, event.hostname)) return;
         const param = event.message.trim().split(' ')[1];
 

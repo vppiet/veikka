@@ -1,7 +1,7 @@
 import {createLogger, format, transports} from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 
-const LEVEL = Bun.env['VEIKKA_LOG_LEVEL'] ?? 'info';
+const LEVEL = Bun.env['LOG_LEVEL'] ?? 'info';
 
 const console = new transports.Console();
 const file = new DailyRotateFile({

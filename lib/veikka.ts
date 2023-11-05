@@ -23,7 +23,7 @@ class Veikka extends Client {
         db.exec('PRAGMA journal_mode = WAL;');
         db.exec('PRAGMA foreign_keys = ON;');
 
-        const schema = await Bun.file('./lib/schema.sql').text();
+        const schema = await Bun.file('./lib/db/schema.sql').text();
         db.exec(schema);
 
         return new Veikka(db, options);

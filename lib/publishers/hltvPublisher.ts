@@ -12,7 +12,7 @@ class HltvPublisher implements Publisher {
     cache?: Parser.Output<Record<string, unknown>>;
     parser: Parser = new Parser();
 
-    addSubscription(channel: string): HltvPublisher {
+    addSubscription(channel: string) {
         this.subscriptions.push(channel);
 
         return this;

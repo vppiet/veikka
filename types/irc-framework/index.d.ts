@@ -238,7 +238,7 @@ export type JoinEvent = {
     account?: string;
 };
 
-export type IrcEvent = RegisteredEvent | WhoisEvent | WhoWasEvent | InviteListEvent | BanListEvent | MonitorListEvent | WhoListEvent | CtcpResponseEvent | NoticeEvent | ActionEvent | CtcpRequestEvent | NoticeEvent | CtcpRequestEvent | PrivMsgEvent | TagMsgEvent | WallopsEvent;
+export type IrcEvent = RegisteredEvent | WhoisEvent | WhoWasEvent | InviteListEvent | BanListEvent | MonitorListEvent | WhoListEvent | CtcpResponseEvent | NoticeEvent | ActionEvent | CtcpRequestEvent | NoticeEvent | CtcpRequestEvent | PrivMsgEvent | TagMsgEvent | WallopsEvent | JoinEvent;
 
 export interface MiddlewareHandler {
     use<T extends unknown[]>(middleware: (...args: [...T, (err?: Error) => void]) => void): void;
