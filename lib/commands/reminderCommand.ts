@@ -2,7 +2,7 @@ import {PrivMsgEvent} from 'irc-framework';
 import {milliseconds, parse, isValid, differenceInMilliseconds, isPast, addMilliseconds, parseISO,
     format} from 'date-fns';
 
-import {Command, PRIVILEGE_LEVEL} from '../command';
+import {Command} from '../command';
 import {Context, Initialisable} from '../util';
 import {Veikka} from 'veikka';
 import {ReminderTable} from '../db/reminder';
@@ -41,7 +41,7 @@ class ReminderCommand extends Command implements Initialisable {
     table?: ReminderTable;
 
     constructor() {
-        super('.', 'muistutus', PRIVILEGE_LEVEL.USER, 1, 1);
+        super('.', 'muistutus', 1, 1);
     }
 
     getEventName(): string {

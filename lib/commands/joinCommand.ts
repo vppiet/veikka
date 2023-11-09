@@ -4,7 +4,7 @@ import {Context} from '../util';
 
 class JoinCommand extends Command {
     constructor() {
-        super('.', 'liity', PRIVILEGE_LEVEL.ADMIN, 1);
+        super('.', 'liity', 1, 0, PRIVILEGE_LEVEL.ADMIN);
     }
 
     getEventName(): string {

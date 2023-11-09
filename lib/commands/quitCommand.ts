@@ -4,7 +4,7 @@ import {Context} from '../util';
 
 class QuitCommand extends Command {
     constructor() {
-        super('.', 'sulje', PRIVILEGE_LEVEL.ADMIN);
+        super('.', 'sulje', 0, 0, PRIVILEGE_LEVEL.ADMIN);
     }
 
     getEventName(): string {

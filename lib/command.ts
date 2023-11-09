@@ -3,36 +3,28 @@ import {IrcEventListener} from 'listener';
 import {isAdmin} from './util';
 
 const PRIVILEGE_LEVEL = {
-    USER: 0,
-    ELEVATED_USER: 1,
-    ADMIN: 2,
+    USER: 100,
+    ELEVATED_USER: 110,
+    ADMIN: 200,
 } as const;
 
 const PARAM_SEP = ', ';
 
-type Parameter = {
-    required: boolean;
-    position: number;
-};
-
-type Parameters = {
-    [key: string]: Parameter,
-};
-
 abstract class Command implements IrcEventListener {
     readonly prefix: string;
     readonly name: string;
-    readonly privilegeLevel: number;
     readonly reqParams: number;
     readonly optParams: number;
+    readonly privilegeLevel: typeof PRIVILEGE_LEVEL[keyof typeof PRIVILEGE_LEVEL];
 
-    constructor(prefix: string, name: string, privilegeLevel: number = PRIVILEGE_LEVEL.USER,
-        reqParams = 0, optParams = 0) {
+    constructor(prefix: string, name: string, reqParams = 0, optParams = 0,
+        privilegeLevel: typeof PRIVILEGE_LEVEL[keyof typeof PRIVILEGE_LEVEL] =
+        PRIVILEGE_LEVEL.USER) {
         this.prefix = prefix;
         this.name = name;
-        this.privilegeLevel = privilegeLevel;
         this.reqParams = reqParams;
         this.optParams = optParams;
+        this.privilegeLevel = privilegeLevel;
     }
 
     abstract getEventName(): string;

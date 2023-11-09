@@ -1,6 +1,6 @@
 import {Context} from '../util';
 import {PrivMsgEvent} from '../../types/irc-framework';
-import {Command, PRIVILEGE_LEVEL} from '../command';
+import {Command} from '../command';
 import {getLogger} from 'logger';
 import {Logger} from 'winston';
 
@@ -55,7 +55,7 @@ class CurrentWeatherCommand extends Command {
     logger: Logger;
 
     constructor() {
-        super('.', 'sää', PRIVILEGE_LEVEL.USER, 1);
+        super('.', 'sää', 1);
         this.logger = getLogger('weatherCommand');
     }
 
