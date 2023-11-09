@@ -5,6 +5,7 @@ import {QuitCommand} from './lib/commands/quitCommand';
 import {JoinCommand} from './lib/commands/joinCommand';
 import {ReminderCommand} from './lib/commands/reminderCommand';
 import {CurrentWeatherCommand} from 'commands/weatherCommand';
+import {CalculateCommand} from 'commands/calculateCommand';
 
 const veikka = await Veikka.create();
 
@@ -13,7 +14,8 @@ veikka.addCommand(new HelpCommand())
     .addCommand(new QuitCommand())
     .addCommand(new JoinCommand())
     .addCommand(new ReminderCommand())
-    .addCommand(new CurrentWeatherCommand());
+    .addCommand(new CurrentWeatherCommand())
+    .addCommand(new CalculateCommand());
 
 veikka.connect({
     nick: Bun.env['NICK'],
