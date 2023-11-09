@@ -47,11 +47,11 @@ type CurrentWeather = {
     };
 };
 
-const LOCATION_NOT_FOUND = 1006;
+const LOCATION_NOT_FOUND_ERROR = 1006;
 const KPH_TO_MPS_MULTIPLIER = 5/18;
 const BASE_URL = 'https://api.weatherapi.com/v1';
 
-class WeatherCommand extends Command {
+class CurrentWeatherCommand extends Command {
     logger: Logger;
 
     constructor() {
@@ -63,7 +63,7 @@ class WeatherCommand extends Command {
         return 'privmsg';
     }
 
-    async listener(this: Context<WeatherCommand>, event: PrivMsgEvent) {
+    async listener(this: Context<CurrentWeatherCommand>, event: PrivMsgEvent) {
         if (!this.listener.match(event.message)) return;
 
         const {req} = this.listener.parseParameters(event.message);
@@ -76,7 +76,7 @@ class WeatherCommand extends Command {
             const body = await response.json<ApiError>();
             this.listener.logger.error('Weather API responded with an error: %o', body);
 
-            if (body.error.code === LOCATION_NOT_FOUND) {
+            if (body.error.code === LOCATION_NOT_FOUND_ERROR) {
                 event.reply('Sää | Paikkaa ei löydetty.');
             } else {
                 event.reply(`Sää | Jokin meni vikaan 8=D | Koodi: ${body.error.code}`);
@@ -99,4 +99,4 @@ class WeatherCommand extends Command {
     }
 }
 
-export {WeatherCommand};
+export {CurrentWeatherCommand};

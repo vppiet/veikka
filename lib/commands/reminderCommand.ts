@@ -1,6 +1,6 @@
 import {PrivMsgEvent} from 'irc-framework';
-import {milliseconds, parse, isValid, differenceInMilliseconds, isPast, addMilliseconds, parseISO}
-    from 'date-fns';
+import {milliseconds, parse, isValid, differenceInMilliseconds, isPast, addMilliseconds, parseISO,
+    format} from 'date-fns';
 
 import {Command, PRIVILEGE_LEVEL} from '../command';
 import {Context, Initialisable} from '../util';
@@ -68,8 +68,8 @@ class ReminderCommand extends Command implements Initialisable {
             });
             const insertResult = this.listener.table?.insertOne(event.nick, event.target,
                 now.toISOString(), addMilliseconds(now, ms).toISOString(), reminderMsg);
-            this.listener.addTimer(this.client, event.target, event.nick, ms, reminderMsg,
-                insertResult?.id);
+            this.listener.addTimer(this.client, event.target, event.nick, ms,
+                format(now, FORMAT_DATETIME), reminderMsg, insertResult?.id);
             return;
         }
 
@@ -88,14 +88,18 @@ class ReminderCommand extends Command implements Initialisable {
         const ms = differenceInMilliseconds(datetime, now);
         const insertResult = this.listener.table?.insertOne(event.nick, event.target,
             now.toISOString(), datetime.toISOString(), reminderMsg);
-        this.listener.addTimer(this.client, event.target, event.nick, ms, reminderMsg,
-            insertResult?.id);
+        this.listener.addTimer(this.client, event.target, event.nick, ms,
+            format(now, FORMAT_DATETIME), reminderMsg, insertResult?.id);
     }
 
-    addTimer(client: Veikka, channel: string, nick: string, ms: number, reminderMsg?: string,
-        id?: number) {
+    addTimer(client: Veikka, channel: string, nick: string, ms: number, createdAt: string,
+        reminderMsg?: string, id?: number) {
         const timer = () => {
-            client.say(channel, `${nick}: ${reminderMsg || 'Muistutus'}`);
+            client.say(channel, `Muistutus | ` +
+                `${reminderMsg || 'Ei viestiä'} | ` +
+                `${nick} | ` +
+                `${createdAt}`);
+
             if (id) {
                 this.table?.deleteOne(id, nick, channel);
             }
@@ -104,7 +108,7 @@ class ReminderCommand extends Command implements Initialisable {
         this.timers.push(setTimeout(timer, ms));
     }
 
-    initialise(client: Veikka): void {
+    initialise(client: Veikka) {
         client.addListener('socket close', this.clearTimers, this);
         this.table = new ReminderTable(client.db);
         this.table.deletePast();
@@ -113,7 +117,8 @@ class ReminderCommand extends Command implements Initialisable {
         for (const reminder of futureReminders) {
             const datetime = parseISO(reminder.reminder_datetime);
             const ms = differenceInMilliseconds(datetime, now);
-            this.addTimer(client, reminder.channel, reminder.nick, ms, reminder.reminder_text,
+            this.addTimer(client, reminder.channel, reminder.nick, ms,
+                format(new Date(reminder.created_at), FORMAT_DATETIME), reminder.reminder_text,
                 reminder.id);
         }
     }
