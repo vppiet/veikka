@@ -8,12 +8,13 @@ import {CurrentWeatherCommand} from 'commands/weatherCommand';
 import {CalculateCommand} from 'commands/calculateCommand';
 
 const veikka = await Veikka.create();
+const db = veikka.db;
 
 veikka.use(new LogMiddleware().middleware());
 veikka.addCommand(new HelpCommand())
     .addCommand(new QuitCommand())
     .addCommand(new JoinCommand())
-    .addCommand(new ReminderCommand())
+    .addCommand(new ReminderCommand(db))
     .addCommand(new CurrentWeatherCommand())
     .addCommand(new CalculateCommand());
 

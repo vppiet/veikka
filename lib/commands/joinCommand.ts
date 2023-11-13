@@ -1,10 +1,14 @@
 import {PrivMsgEvent} from 'irc-framework';
+
 import {Command, PRIVILEGE_LEVEL} from '../command';
 import {Context} from '../util';
 
 class JoinCommand extends Command {
     constructor() {
-        super('.', 'liity', 1, 0, PRIVILEGE_LEVEL.ADMIN);
+        super('.', 'liity', [
+            '.liity <kanava>',
+            'Liity kanavalle.',
+        ], 1, 0, PRIVILEGE_LEVEL.ADMIN);
     }
 
     getEventName(): string {

@@ -1,6 +1,6 @@
 import {IrcEvent} from 'irc-framework';
 import {IrcEventListener} from 'listener';
-import {isAdmin} from './util';
+import {capitalize, isAdmin} from './util';
 
 const PRIVILEGE_LEVEL = {
     USER: 100,
@@ -13,15 +13,17 @@ const PARAM_SEP = ', ';
 abstract class Command implements IrcEventListener {
     readonly prefix: string;
     readonly name: string;
+    readonly help: string[];
     readonly reqParams: number;
     readonly optParams: number;
     readonly privilegeLevel: typeof PRIVILEGE_LEVEL[keyof typeof PRIVILEGE_LEVEL];
 
-    constructor(prefix: string, name: string, reqParams = 0, optParams = 0,
+    constructor(prefix: string, name: string, help: string[], reqParams = 0, optParams = 0,
         privilegeLevel: typeof PRIVILEGE_LEVEL[keyof typeof PRIVILEGE_LEVEL] =
         PRIVILEGE_LEVEL.USER) {
         this.prefix = prefix;
         this.name = name;
+        this.help = help;
         this.reqParams = reqParams;
         this.optParams = optParams;
         this.privilegeLevel = privilegeLevel;
@@ -57,8 +59,6 @@ abstract class Command implements IrcEventListener {
     }
 
     parseParameters(message: string) {
-        if (this.reqParams === 0) return {req: [], opt: []};
-
         const paramCount = this.reqParams + this.optParams;
 
         // https://stackoverflow.com/a/5582719
@@ -75,6 +75,20 @@ abstract class Command implements IrcEventListener {
             req: params.slice(0, this.reqParams),
             opt: params.slice(this.reqParams),
         };
+    }
+
+    static joinWithSeparator(...input: string[]) {
+        return input.join(' | ');
+    }
+
+    createSay(...input: string[]) {
+        const capitalizedName = capitalize(this.name);
+        input.unshift(capitalizedName);
+        return input.join(' | ');
+    }
+
+    getHelp(...input: string[]) {
+        return this.createSay(...this.help, ...input);
     }
 }
 

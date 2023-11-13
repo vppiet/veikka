@@ -1,10 +1,14 @@
 import {PrivMsgEvent} from 'irc-framework';
+
 import {Command, PRIVILEGE_LEVEL} from '../command';
 import {Context} from '../util';
 
 class QuitCommand extends Command {
     constructor() {
-        super('.', 'sulje', 0, 0, PRIVILEGE_LEVEL.ADMIN);
+        super('.', 'sulje', [
+            '.sulje',
+            'Sulje botti.',
+        ], 0, 0, PRIVILEGE_LEVEL.ADMIN);
     }
 
     getEventName(): string {

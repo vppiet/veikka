@@ -102,3 +102,9 @@ TODO:
 TODO:
 - command overloads & argument rework
 - initalizing & closing
+
+## 2023-11-10
+
+TODO:
+- calculator handling symbols (pi, e) (OK)
+- closing leaves sqlite files opened (finalize statements??) (OK)

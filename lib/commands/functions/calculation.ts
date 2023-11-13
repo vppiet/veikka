@@ -31,6 +31,14 @@ const OPERATORS: Record<string, Operator> = {
     '^': new Operator('^', 2, ASSOCIATIVITY.RIGHT, (a, b) => Math.pow(a, b)),
 };
 
+const SYMBOLS: Record<string, number> = {
+    'pi': Math.PI,
+    'e': Math.E,
+};
+
+const NUMBER_CHARS = '0123456789.';
+const SUPPORTED_CHARS = NUMBER_CHARS + Object.keys(OPERATORS).join('');
+
 // Implementation based on pseudo code in https://en.wikipedia.org/wiki/Shunting_yard_algorithm
 function lexer(input: string): {tokens: (number | string)[], error?: string} {
     const outputQue: (number | string)[] = [];
@@ -41,15 +49,28 @@ function lexer(input: string): {tokens: (number | string)[], error?: string} {
         if (!buffer) return true;
 
         const x = Number.parseFloat(buffer);
-        outputQue.push(x);
+
+        if (!Number.isNaN(x)) {
+            outputQue.push(x);
+        } else if (buffer in SYMBOLS) {
+            outputQue.push(SYMBOLS[buffer]);
+        } else {
+            return false;
+        }
+
         buffer = '';
-        return !Number.isNaN(x);
+        return true;
     };
 
     for (let i = 0; i < input.length; i++) {
         const char = input[i];
 
-        if ('0123456789.'.includes(char)) {
+        if (NUMBER_CHARS.includes(char)) {
+            buffer += char;
+            continue;
+        }
+
+        if (Object.keys(SYMBOLS).some((s) => s.startsWith(buffer + char))) {
             buffer += char;
             continue;
         }
@@ -141,4 +162,4 @@ function calculate(input: string): {result?: number, error?: string} {
     return {result: Number(buffer[0])};
 }
 
-export {lexer, calculate};
+export {SUPPORTED_CHARS, SYMBOLS, lexer, calculate};

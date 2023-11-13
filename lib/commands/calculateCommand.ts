@@ -1,5 +1,6 @@
-import {calculate} from 'functions/calculation';
-import {PrivMsgEvent} from '../../types/irc-framework';
+import {PrivMsgEvent} from 'irc-framework';
+
+import {SUPPORTED_CHARS, SYMBOLS, calculate} from './functions/calculation';
 import {Command} from '../command';
 import {Context} from '../util';
 
@@ -15,7 +16,12 @@ function round(value: number, decPlaces = 2) {
 
 class CalculateCommand extends Command {
     constructor() {
-        super('.', 'laske', 1, 1);
+        super('.', 'laske', [
+            '.laske <lauseke>, [pyöristys]',
+            'Laske matemaattinen lauseke.',
+            `Tuetut kirjaimet: "${SUPPORTED_CHARS}"`,
+            `Tuetut symbolit: ${Object.keys(SYMBOLS).map((s) => '"' + s + '"').join(', ')}`,
+        ], 1, 1);
     }
 
     getEventName(): string {
@@ -33,10 +39,14 @@ class CalculateCommand extends Command {
         if (result) {
             const decimalPlaces = Number.isNaN(Number.parseInt(opt[0])) ? undefined :
                 Number.parseInt(opt[0]);
-            event.reply(`Laske | ${req} = ${round(result, decimalPlaces)}`);
+            const rounded = round(result, decimalPlaces);
+            event.reply(`Laske | ${input} = ` +
+                `${String(result) === String(rounded) ? result : '~' + rounded}`);
         } else {
-            event.reply('Laske | Nyt meni jotain vikaan (syntaksi? bugi?)' +
-                (error ? ` (${error})` : ''));
+            event.reply('Laske | Nyt meni jotain vikaan. | ' +
+                `Tuetut kirjaimet: "${SUPPORTED_CHARS}" | ` +
+                `Tuetut symbolit: ${Object.keys(SYMBOLS).map((s) => '"' + s + '"').join(', ')}` +
+                (error ? ` | ${error}` : ''));
         }
     }
 }

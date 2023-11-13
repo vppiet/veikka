@@ -1,10 +1,11 @@
 import {describe, test, expect} from 'bun:test';
+import {PrivMsgEvent} from 'irc-framework';
+
 import {Command, PRIVILEGE_LEVEL} from '../command';
-import {PrivMsgEvent} from '../../types/irc-framework';
 
 class TestCommand extends Command {
     constructor() {
-        super('.', 'test', PRIVILEGE_LEVEL.USER, 1);
+        super('.', 'test', ['Test case'], 1);
     }
 
     getEventName(): string {
