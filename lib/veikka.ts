@@ -3,7 +3,7 @@ import {Channel, Client, IrcClientOptions} from 'irc-framework';
 
 import {Command} from './command';
 import {Publisher} from './publisher';
-import {isInitialisable} from './util';
+import {Initialisable, isType} from './util';
 import coreListeners from './coreListeners';
 
 class Veikka extends Client {
@@ -26,6 +26,8 @@ class Veikka extends Client {
         const schema = await Bun.file('./lib/db/schema.sql').text();
         db.exec(schema);
 
+        process.on('exit', () => db.close());
+
         return new Veikka(db, options);
     }
 
@@ -33,7 +35,7 @@ class Veikka extends Client {
         cmds.forEach((c) => {
             this.addListener(c.getEventName(), c.listener, {client: this, listener: c});
 
-            if (isInitialisable(c)) {
+            if (isType<Initialisable, Command>(c, ['initialise'])) {
                 c.initialise(this);
             }
 

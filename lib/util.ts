@@ -1,5 +1,6 @@
+import {Statement} from 'bun:sqlite';
 import {IrcEvent, MiddlewareHandler} from 'irc-framework';
-import {Veikka} from 'veikka';
+import {Veikka} from './veikka';
 
 type Context<L> = {
     client: Veikka;
@@ -10,8 +11,12 @@ type Initialisable = {
     initialise(client: Veikka): void;
 };
 
-function isInitialisable(o: object): o is Initialisable {
-    return 'initialise' in o;
+interface Closeable {
+    close(client: Veikka): void;
+}
+
+function isType<T extends object, U extends object>(o: U, props: string[]): o is T & U {
+    return props.every((p) => p in o);
 }
 
 const INTERVAL = {
@@ -36,12 +41,25 @@ function isAdmin(ident: string, hostname: string) {
     return ident + '@' + hostname === Bun.env['ADMIN_MASK'];
 }
 
+function capitalize(input: string) {
+    return input[0].toUpperCase() + input.slice(1);
+}
+
+function finalizeAll(stmts: Record<string, Statement>) {
+    for (const stmt of Object.values(stmts)) {
+        stmt.finalize();
+    }
+}
+
 export {
     Context,
     Initialisable,
-    isInitialisable,
+    Closeable,
+    isType,
     INTERVAL,
     isEventType,
     useParsedEvents,
     isAdmin,
+    capitalize,
+    finalizeAll,
 };

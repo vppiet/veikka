@@ -1,7 +1,8 @@
 import {IrcEventListener} from './listener';
-import {Context} from './util';
+import {Closeable, Context, isType} from './util';
 import {JoinEvent, RegisteredEvent} from 'irc-framework';
 import NETWORKS from './networks';
+import {Command} from 'command';
 
 class JoinListener implements IrcEventListener {
     getEventName(): string {
@@ -22,6 +23,9 @@ class SocketCloseListener implements IrcEventListener {
     listener(this: Context<SocketCloseListener>): void {
         this.client.publishers.forEach((p) => p.stopTimer());
         this.client.db.close();
+        this.client.commands
+            .filter((c): c is Command & Closeable => isType<Closeable, Command>(c, ['close']))
+            .forEach((c) => c.close(this.client));
     }
 }
 
