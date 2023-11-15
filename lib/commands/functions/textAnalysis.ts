@@ -1,3 +1,5 @@
+import {PropertyValue} from '../../util';
+
 const CONSONANTS = [
     'b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l',
     'm', 'n', 'p', 'q', 'r', 's', 't', 'v',
@@ -15,50 +17,137 @@ const SYLLABLE_TYPES = [
 ];
 const S_SYLLABLE_TYPES = ['CCVC', 'CCVCC']; // syllable starts with an 's'
 
-type OverrideEntry = {
-    before: string;
-    after: string;
+type Operation = {
     shift: number;
-    from: typeof DIRECTION[keyof typeof DIRECTION];
+    side: PropertyValue<typeof SIDE>,
 };
 
-const DIRECTION = {
+type VocalTypeHandler = (before: string, after: string) => Operation;
+
+const SIDE = {
     LEFT: 'left',
     RIGHT: 'right',
 } as const;
 
-const OVERRIDES: {[key: string]: OverrideEntry[]} = {
-    'CV': [{
-        before: 'CV',
-        after: 'CCV',
-        replace: 'CVC',
-    }, {
-        before: '',
-        after: 'CCV',
-        replace: 'CVC',
-    }, {
-        before: 'CVC',
-        after: 'C',
-        replace: 'CVC',
-    }, {
-        before: '',
-        after: 'V',
-        replace: 'CVV',
-    }, {
-        before: 'CV',
-        after: 'C',
-        replace: 'CVC',
-    }, {
-        before: '',
-        after: 'CCCV',
-        replace: 'CVCC',
-    }],
-    'CVC': [{ // CV-CVC-VCCI -> CV-CV-CV
-        before: 'CV',
-        after: 'V',
-        shift: -1,
-        from: DIRECTION.LEFT,
-    }],
+const NO_SHIFT_OP: Operation = {
+    shift: 0,
+    side: SIDE.LEFT,
+};
+
+/*
+    Priority:
+    1. before > after
+    2. equal > endsWith/startsWith
+*/
+const VOCAL_TYPE_HANDLERS: {[key: string]: VocalTypeHandler} = {
+    'CV': (before, after) => {
+        if (before === 'V') {
+            if (after.startsWith('CCC')) return {shift: 2, side: SIDE.RIGHT};
+        }
+
+        if (after === 'C') {
+            return {shift: 1, side: SIDE.RIGHT};
+        }
+
+        if (after === 'V') {
+            return {shift: 1, side: SIDE.RIGHT};
+        }
+
+        if (before.endsWith('CVCV')) {
+            if (after.startsWith('CCCV')) return {shift: 2, side: SIDE.RIGHT};
+        }
+
+        if (before.endsWith('CVC')) {
+            if (after === 'C') return {shift: 1, side: SIDE.RIGHT};
+            if (after.startsWith('VCVC')) return {shift: 1, side: SIDE.RIGHT};
+        }
+
+        if (before.endsWith('CVV')) {
+            if (after === 'C') return {shift: 1, side: SIDE.RIGHT};
+        }
+
+        if (before.endsWith('CV')) {
+            if (after.startsWith('CCV')) return {shift: 1, side: SIDE.RIGHT};
+        }
+
+        if (after.startsWith('CCV')) {
+            return {shift: 1, side: SIDE.RIGHT};
+        }
+
+        if (after.startsWith('CCC')) {
+            return {shift: 2, side: SIDE.RIGHT};
+        }
+
+        if (after.startsWith('VCV')) {
+            return {shift: 1, side: SIDE.RIGHT};
+        }
+
+        return NO_SHIFT_OP;
+    },
+    'V': (before, after) => {
+        if (after.startsWith('CCV')) {
+            return {shift: 1, side: SIDE.RIGHT};
+        }
+
+        return NO_SHIFT_OP;
+    },
+    // 'CV': [{
+    //     before: 'CV',
+    //     after: 'CCV',
+    //     // replace: 'CVC',
+    //     operation: {
+    //         shift: 0,
+    //         side: SIDE.LEFT,
+    //     },
+    // }, {
+    //     before: '',
+    //     after: 'CCV',
+    //     // replace: 'CVC',
+    //     operation: {
+    //         shift: 0,
+    //         side: SIDE.LEFT,
+    //     },
+    // }, {
+    //     before: 'CVC',
+    //     after: 'C',
+    //     // replace: 'CVC',
+    //     operation: {
+    //         shift: 0,
+    //         side: SIDE.LEFT,
+    //     },
+    // }, {
+    //     before: '',
+    //     after: 'V',
+    //     // replace: 'CVV',
+    //     operation: {
+    //         shift: 0,
+    //         side: SIDE.LEFT,
+    //     },
+    // }, {
+    //     before: 'CV',
+    //     after: 'C',
+    //     noAfter: 'CVCCCV',
+    //     // replace: 'CVC',
+    //     operation: {
+    //         shift: 0,
+    //         side: SIDE.LEFT,
+    //     },
+    // }, {
+    //     before: 'CVCV',
+    //     after: 'CCCV',
+    //     operation: {
+    //         shift: -1,
+    //         side: SIDE.RIGHT,
+    //     },
+    // }],
+    // 'CVC': [{ // CV-CVC-VCCI -> CV-CV-CV
+    //     before: 'CV',
+    //     after: 'V',
+    //     operation: {
+    //         shift: -1,
+    //         side: SIDE.RIGHT,
+    //     },
+    // }],
 };
 
 // Sana:    ka-taf-a-lkki
@@ -112,19 +201,16 @@ function getMatchingType(input: string, type: string) {
     return;
 }
 
-function getOverrideExpand(type: string, before = '', after = '') {
-    if (type in OVERRIDES) {
-        const o = OVERRIDES[type].find((o) => {
-            return (!o.before || before.endsWith(o.before)) &&
-                (!o.after || after.startsWith(o.after));
-        });
+function getOperation(type: string, before = '', after = ''): Operation {
+    if (type in VOCAL_TYPE_HANDLERS) {
+        const op = VOCAL_TYPE_HANDLERS[type];
 
-        if (o) {
-            return type.length - o.replace.length;
+        if (op) {
+            return op(before, after);
         }
     }
 
-    return 0;
+    return NO_SHIFT_OP;
 }
 
 function getSyllables(input: string) {
@@ -144,24 +230,32 @@ function getSyllables(input: string) {
 
             if (i !== word.length - 1 && matchedType) {
                 const before = mapToVocalType(word.slice(0, i - buffer.length + 1));
-                const after = mapToVocalType(word.slice(i + 1, word.length));
-                const expand = getOverrideExpand(matchedType, before, after);
-                // console.log([i, word.slice(0, i - buffer.length + 1), buffer, word.slice(i + 1, word.length), shift].join(' | '));
+                const after = mapToVocalType(word.slice(before.length + buffer.length));
+                const op = getOperation(matchedType, before, after);
 
+                // eslint-disable-next-line max-len
+                console.log(before, type, after, word.slice(0, i - buffer.length + 1), word.slice(before.length + buffer.length), op);
+
+                // eslint-disable-next-line max-len
+                // console.log([i, word.slice(0, i - buffer.length + 1), buffer, word.slice(i + 1, word.length), shift].join(' | '));
+                // console.log(before, matchedType, after);
                 // console.log(i, shift, buffer, word.slice(i - buffer.length + 1, i + shift + 1));
                 let start = i - buffer.length + 1;
-                let end = i + 1;
+                let end = start + buffer.length;
 
-                if (expand < 0) {
-                    start += expand;
+                // SIDE
+                // left:    +expands, -shrinks
+                // right:   +expands, -shrinks
+                if (op.side === SIDE.LEFT) {
+                    start -= op.shift;
                 } else {
-                    end += expand;
+                    end += op.shift;
+                    i += op.shift;
                 }
 
-                console.log(expand, word.slice(start, end));
+                // console.log('selected', op, buffer, i, start, end, word.slice(start, end));
                 syllables.push(word.slice(start, end));
                 buffer = '';
-
             }
 
             // console.log(syllables);

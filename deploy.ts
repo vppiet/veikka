@@ -24,4 +24,5 @@ veikka.connect({
     gecos: Bun.env['GECOS'],
     host: Bun.env['SERVER_HOST'],
     port: Number(Bun.env['SERVER_PORT']) || 6667,
+    auto_reconnect_max_retries: 10,
 });

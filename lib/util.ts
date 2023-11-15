@@ -51,6 +51,12 @@ function finalizeAll(stmts: Record<string, Statement>) {
     }
 }
 
+function peek<T>(arr: T[], i: number) {
+    return arr[i+1];
+}
+
+type PropertyValue<T extends Record<PropertyKey, unknown>> = T[keyof T];
+
 export {
     Context,
     Initialisable,
@@ -62,4 +68,6 @@ export {
     isAdmin,
     capitalize,
     finalizeAll,
+    peek,
+    PropertyValue,
 };
