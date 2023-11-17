@@ -1,272 +1,221 @@
-import {PropertyValue} from '../../util';
+const CONSONANTS = ['b', 'c', 'd', 'f', 'g',
+    'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v'];
+function isConsonant(char: string) {
+    if (!char) {
+        throw new Error(`Argument "char" was ${typeof char}`);
+    }
 
-const CONSONANTS = [
-    'b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l',
-    'm', 'n', 'p', 'q', 'r', 's', 't', 'v',
-];
-const VOWELS = ['a', 'e', 'i', 'o', 'u', 'y', 'ä', 'ö'];
-const DIPHTHONGS = [
-    'ai', 'ei', 'oi', 'äi', 'öi', 'ey', 'äy', 'öy', 'au',
-    'eu', 'ou', 'ui', 'yi', 'iu', 'iy', 'ie', 'uo', 'yö',
-];
-
-const SYLLABLE_TYPES = [
-    'CV', 'CVV', 'CVC', 'CVVC', 'CVCC',
-    'CCV', 'CCVV', 'CCVVC', 'CCVC', 'CCVCC',
-    'V', 'VV', 'VVC', 'VC', 'VCC',
-];
-const S_SYLLABLE_TYPES = ['CCVC', 'CCVCC']; // syllable starts with an 's'
-
-type Operation = {
-    shift: number;
-    side: PropertyValue<typeof SIDE>,
-};
-
-type VocalTypeHandler = (before: string, after: string) => Operation;
-
-const SIDE = {
-    LEFT: 'left',
-    RIGHT: 'right',
-} as const;
-
-const NO_SHIFT_OP: Operation = {
-    shift: 0,
-    side: SIDE.LEFT,
-};
-
-/*
-    Priority:
-    1. before > after
-    2. equal > endsWith/startsWith
-*/
-const VOCAL_TYPE_HANDLERS: {[key: string]: VocalTypeHandler} = {
-    'CV': (before, after) => {
-        if (before === 'V') {
-            if (after.startsWith('CCC')) return {shift: 2, side: SIDE.RIGHT};
-        }
-
-        if (after === 'C') {
-            return {shift: 1, side: SIDE.RIGHT};
-        }
-
-        if (after === 'V') {
-            return {shift: 1, side: SIDE.RIGHT};
-        }
-
-        if (before.endsWith('CVCV')) {
-            if (after.startsWith('CCCV')) return {shift: 2, side: SIDE.RIGHT};
-        }
-
-        if (before.endsWith('CVC')) {
-            if (after === 'C') return {shift: 1, side: SIDE.RIGHT};
-            if (after.startsWith('VCVC')) return {shift: 1, side: SIDE.RIGHT};
-        }
-
-        if (before.endsWith('CVV')) {
-            if (after === 'C') return {shift: 1, side: SIDE.RIGHT};
-        }
-
-        if (before.endsWith('CV')) {
-            if (after.startsWith('CCV')) return {shift: 1, side: SIDE.RIGHT};
-        }
-
-        if (after.startsWith('CCV')) {
-            return {shift: 1, side: SIDE.RIGHT};
-        }
-
-        if (after.startsWith('CCC')) {
-            return {shift: 2, side: SIDE.RIGHT};
-        }
-
-        if (after.startsWith('VCV')) {
-            return {shift: 1, side: SIDE.RIGHT};
-        }
-
-        return NO_SHIFT_OP;
-    },
-    'V': (before, after) => {
-        if (after.startsWith('CCV')) {
-            return {shift: 1, side: SIDE.RIGHT};
-        }
-
-        return NO_SHIFT_OP;
-    },
-    // 'CV': [{
-    //     before: 'CV',
-    //     after: 'CCV',
-    //     // replace: 'CVC',
-    //     operation: {
-    //         shift: 0,
-    //         side: SIDE.LEFT,
-    //     },
-    // }, {
-    //     before: '',
-    //     after: 'CCV',
-    //     // replace: 'CVC',
-    //     operation: {
-    //         shift: 0,
-    //         side: SIDE.LEFT,
-    //     },
-    // }, {
-    //     before: 'CVC',
-    //     after: 'C',
-    //     // replace: 'CVC',
-    //     operation: {
-    //         shift: 0,
-    //         side: SIDE.LEFT,
-    //     },
-    // }, {
-    //     before: '',
-    //     after: 'V',
-    //     // replace: 'CVV',
-    //     operation: {
-    //         shift: 0,
-    //         side: SIDE.LEFT,
-    //     },
-    // }, {
-    //     before: 'CV',
-    //     after: 'C',
-    //     noAfter: 'CVCCCV',
-    //     // replace: 'CVC',
-    //     operation: {
-    //         shift: 0,
-    //         side: SIDE.LEFT,
-    //     },
-    // }, {
-    //     before: 'CVCV',
-    //     after: 'CCCV',
-    //     operation: {
-    //         shift: -1,
-    //         side: SIDE.RIGHT,
-    //     },
-    // }],
-    // 'CVC': [{ // CV-CVC-VCCI -> CV-CV-CV
-    //     before: 'CV',
-    //     after: 'V',
-    //     operation: {
-    //         shift: -1,
-    //         side: SIDE.RIGHT,
-    //     },
-    // }],
-};
-
-// Sana:    ka-taf-a-lkki
-// Väärin:  CV-CVC-V-CCCV
-
-// Sana:    ka-ta-falk-ki
-// Oikein:  CV-CV-CVCC-CV
-
-function isAlphabet(char: string) {
-    return [...VOWELS, ...CONSONANTS].includes(char);
+    return CONSONANTS.includes(char);
 }
 
-function mapToVocalType(input: string) {
-    let types = '';
+const VOWELS = ['a', 'e', 'i', 'o', 'u', 'y', 'ä', 'ö'];
+function isVowel(char: string) {
+    return VOWELS.includes(char);
+}
 
-    if (!input) {
-        return types;
+const ALPHABETS = [...VOWELS, ...CONSONANTS];
+function isAlphabet(char: string) {
+    if (!char) {
+        throw new Error(`Argument "char" was ${typeof char}`);
     }
+
+    return ALPHABETS.includes(char);
+}
+
+const DIPHTHONGS = [
+    'ai', 'au', 'ei', 'eu', 'ey', 'ie', 'iu', 'iy',
+    'oi', 'ou', 'ui', 'uo', 'yi', 'yö', 'äi', 'äy',
+    'öi', 'öy',
+];
+function isDiphthong(str: string) {
+    if (!str) {
+        throw new Error(`Argument "str" was ${typeof str}`);
+    }
+
+    return DIPHTHONGS.includes(str);
+}
+
+const SYLLABLE_TYPES = [
+    'cv', 'cvc', 'cvcc', 'cvv', 'cvvc',
+    'v', 'vc', 'vcc', 'vv', 'vvc',
+    'ccv', 'ccvc', 'ccvcc', 'ccvv', 'ccvvc',
+];
+const S_SYLLABLE_TYPES = ['ccvc', 'ccvcc']; // syllable starts with an 's'
+
+function mapType(input: string) {
+    let type = '';
 
     for (let i = 0; i < input.length; i++) {
         const char = input[i].toLowerCase();
-
-        if (VOWELS.includes(char)) {
-            types += 'V';
-        } else if (CONSONANTS.includes(char)) {
-            types += 'C';
-        } else if (char === ' ') {
-            types += ' ';
+        if (isVowel(char)) {
+            type += 'v';
+        } else if (isConsonant(char)) {
+            type += 'c';
         } else {
-            // special character placeholder
-            types += '*';
+            // TODO: non-v & non-c are handling
         }
     }
 
-    return types;
+    return type;
 }
 
-function getMatchingType(input: string, type: string) {
-    const sti = SYLLABLE_TYPES.indexOf(type);
-    if (sti !== -1) {
-        return SYLLABLE_TYPES[sti];
-    }
-
-    if (input.toLowerCase().startsWith('s')) {
-        const ssti = S_SYLLABLE_TYPES.indexOf(type);
-        if (ssti !== -1) {
-            return S_SYLLABLE_TYPES[ssti];
+const matchers: {[k: string]: (view: string, before: string, after:string) => boolean} = {
+    v: (view, before, after) => {
+        if (isConsonant(after[0])) {
+            if (isVowel(after[1])) {
+                return true;
+            }
         }
-    }
 
-    return;
-}
-
-function getOperation(type: string, before = '', after = ''): Operation {
-    if (type in VOCAL_TYPE_HANDLERS) {
-        const op = VOCAL_TYPE_HANDLERS[type];
-
-        if (op) {
-            return op(before, after);
+        // a ort ta
+        if (after[0] && isVowel(after[0]) &&
+            view[0] !== after[0] && !isDiphthong(view[0] + after[0])) {
+            return true;
         }
-    }
 
-    return NO_SHIFT_OP;
-}
+        return false;
+    },
+    vc: (view, before, after) => {
+        if (isConsonant(after[0]) &&
+            !(after[1] && isConsonant(after[1]))) {
+            return true;
+        }
 
-function getSyllables(input: string) {
-    const words = input.trim().split(' ');
-    console.log('words:', words);
+        return false;
+    },
+    cv: (view, before, after) => {
+        if (isConsonant(after[0])) {
+            if (isVowel(after[1])) {
+                return true;
+            }
+        }
 
-    const syllables: string[] = [];
-
-    for (const word of words) {
-        let buffer = '';
-
-        for (let i = 0; i < word.length; i++) {
-            buffer += word[i];
-            const type = mapToVocalType(buffer);
-            const matchedType = getMatchingType(buffer, type);
-            // console.log(`buffer: ${buffer} | type: ${type} | matchedType: ${matchedType}`);
-
-            if (i !== word.length - 1 && matchedType) {
-                const before = mapToVocalType(word.slice(0, i - buffer.length + 1));
-                const after = mapToVocalType(word.slice(before.length + buffer.length));
-                const op = getOperation(matchedType, before, after);
-
-                // eslint-disable-next-line max-len
-                console.log(before, type, after, word.slice(0, i - buffer.length + 1), word.slice(before.length + buffer.length), op);
-
-                // eslint-disable-next-line max-len
-                // console.log([i, word.slice(0, i - buffer.length + 1), buffer, word.slice(i + 1, word.length), shift].join(' | '));
-                // console.log(before, matchedType, after);
-                // console.log(i, shift, buffer, word.slice(i - buffer.length + 1, i + shift + 1));
-                let start = i - buffer.length + 1;
-                let end = start + buffer.length;
-
-                // SIDE
-                // left:    +expands, -shrinks
-                // right:   +expands, -shrinks
-                if (op.side === SIDE.LEFT) {
-                    start -= op.shift;
-                } else {
-                    end += op.shift;
-                    i += op.shift;
-                }
-
-                // console.log('selected', op, buffer, i, start, end, word.slice(start, end));
-                syllables.push(word.slice(start, end));
-                buffer = '';
+        if (isVowel(after[0])) {
+            if (view[1] !== after[0] && !isDiphthong(view[1] + after[0])) {
+                return true;
             }
 
-            // console.log(syllables);
+            if (view[1] === 'i' && isDiphthong(view[1] + after[0])) {
+                if (after[1] && isConsonant(after[1]) && !after[2]) {
+                    return true;
+                }
+            }
+
+            if (!after[1] && before.length === 1) {
+                return true;
+            }
         }
 
-        if (buffer) {
-            syllables.push(buffer);
+        return false;
+    },
+    // ka tas trofi
+    cvc: (view, before, after) => {
+        if (after[0] && after[1]) {
+            if (isConsonant(after[0])) {
+                if (isVowel(after[1])) {
+                    return true;
+                }
+            }
+
+            if (after[0] + after[1] == 'tr') { // foreign
+                return true;
+            }
         }
+
+        return false;
+    },
+    cvcc: (view, before, after) => {
+        if (after[0] && isConsonant(after[0])) {
+            return true;
+        }
+
+        return false;
+    },
+    cvv: (view, before, after) => {
+        if (isDiphthong(view.slice(1))) {
+            if (after[0] && isConsonant(after[0]) && after[1] && isVowel(after[1])) {
+                return true;
+            }
+        }
+
+        if (view[1] === view[2] && after[1] && isVowel(after[1])) {
+            return true;
+        }
+
+        if (view[1] !== view[2] && after[0] && isVowel(after[0])) {
+            return true;
+        }
+
+        return false;
+    },
+    cvvc: (view, before, after) => {
+        return true;
+    },
+    vv: (view, before, after) => {
+        if (isDiphthong(view)) {
+            return true;
+        }
+
+        return false;
+    },
+    vcc: (view, before, after) => {
+        if (after[0] && isConsonant(after[0])) {
+            return true;
+        }
+
+        return false;
+    },
+    ccv: (view, before, after) => {
+        return true;
+    },
+    // xx: (view, before, after) => {
+    //     return false;
+    // },
+};
+
+function isSyllable(view: string, before = '', after = '') {
+    const type = mapType(view);
+    console.log(`finding handler for "${type}" "${view}"`);
+
+    if (type in matchers) {
+        console.log(`handler found for "${type}" "${view}"`);
+        console.log({type, before, view, after}); // DEBUG
+        return matchers[type](view, before, after);
+    }
+
+    console.log(`handler not found for "${type}", returning to buffer`);
+    return false;
+}
+
+function getWordSyllables(word: string) {
+    word = word.trim();
+    const syllables: string[] = [];
+    let buffer = '';
+
+    console.log('\n#####################', word, '#####################\n');
+
+    for (let i = 0; i < word.length; i++) {
+        buffer += word[i];
+
+        if (i === word.length - 1) {
+            syllables.push(buffer);
+            console.log({syllables});
+            continue;
+        }
+
+        const start = i - buffer.length + 1;
+        const before = word.slice(0, start);
+        const after = word.slice(before.length + buffer.length);
+
+        if (isSyllable(buffer, before, after)) {
+            syllables.push(buffer);
+            buffer = '';
+        }
+
+        console.log({syllables});
     }
 
     return syllables;
 }
 
-export {getSyllables};
+export {getWordSyllables};
