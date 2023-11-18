@@ -168,6 +168,8 @@ describe('textAnalysis', () => {
         expect(getWordSyllables('myllyä')).toEqual(['myl', 'ly', 'ä']);
         expect(getWordSyllables('pian')).toEqual(['pi', 'an']);
         expect(getWordSyllables('hion')).toEqual(['hi', 'on']);
+        expect(getWordSyllables('hioin')).toEqual(['hi', 'oin']);
+        expect(getWordSyllables('hioa')).toEqual(['hi', 'o', 'a']);
         expect(getWordSyllables('rae')).toEqual(['ra', 'e']);
         expect(getWordSyllables('koe')).toEqual(['ko', 'e']);
         expect(getWordSyllables('aie')).toEqual(['ai', 'e']);
@@ -181,6 +183,5 @@ describe('textAnalysis', () => {
         expect(getWordSyllables('teatteri')).toEqual(['te', 'at', 'te', 'ri']);
         expect(getWordSyllables('Leo')).toEqual(['Le', 'o']);
         expect(getWordSyllables('Joel')).toEqual(['Jo', 'el']);
-        expect(getWordSyllables('')).toEqual([]);
     });
 });

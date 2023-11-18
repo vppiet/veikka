@@ -42,177 +42,176 @@ function isType(input: string, type: string) {
     return mapType(input) === type;
 }
 
-const matchers: {[k: string]: (view: string, before: string, after: string, syllableN: number) =>
-    boolean} = {
-        'V': (view, before, after, syllableN) => {
-            if (after[0]) {
-                if (of(CONSONANTS, after[0])) {
-                    if (after[1] && of(VOWELS, after[1])) {
-                        return true;
-                    }
-                }
-
-                if (of(VOWELS, after[0]) &&
-                    view[0] !== after[0] && !DIPHTHONGS.includes(view[0] + after[0])) {
+const matchers: {[k: string]: (view: string, before: string, after: string) => boolean} = {
+    'V': (view, before, after) => {
+        if (after[0]) {
+            if (of(CONSONANTS, after[0])) {
+                if (after[1] && of(VOWELS, after[1])) {
                     return true;
                 }
             }
 
-            return false;
-        },
-        'VC': (view, before, after, syllableN) => {
-            if (after[0] && of(CONSONANTS, after[0]) &&
-                !(after[1] && of(CONSONANTS, after[1]))) {
+            if (of(VOWELS, after[0]) &&
+                view[0] !== after[0] && !DIPHTHONGS.includes(view[0] + after[0])) {
                 return true;
             }
+        }
 
-            return false;
-        },
-        'CV': (view, before, after, syllableN) => {
-            if (after[0]) {
-                if (of(CONSONANTS, after[0])) {
-                    if (after[1] && of(VOWELS, after[1])) {
-                        return true;
-                    }
-                }
+        return false;
+    },
+    'VC': (view, before, after) => {
+        if (after[0] && of(CONSONANTS, after[0]) &&
+            !(after[1] && of(CONSONANTS, after[1]))) {
+            return true;
+        }
 
-                if (of(VOWELS, after[0])) {
-                    if (view[1] !== after[0] && !of(DIPHTHONGS, view[1] + after[0])) {
-                        return true;
-                    }
-
-                    if (view[1] === 'i' && of(DIPHTHONGS, view[1] + after[0])) {
-                        if (after[1] && of(CONSONANTS, after[1]) && !after[2]) {
-                            return true;
-                        }
-
-                        if (view[1] + after[0] === 'ie' && syllableN > 0) {
-                            return true;
-                        }
-                    }
-
-                    if (!after[1]) {
-                        if (before.length === 1) {
-                            return true;
-                        }
-
-                        if (after[0] !== 'i' && view[1] !== after[0]) {
-                            return true;
-                        }
-                    }
-                }
-            }
-
-            return false;
-        },
-        'CVC': (view, before, after, syllableN) => {
-            if (after[0] && after[1]) {
-                if (of(CONSONANTS, after[0])) {
-                    if (of(VOWELS, after[1])) {
-                        return true;
-                    }
-                }
-
-                if (after[0] + after[1] == 'tr') { // foreign
+        return false;
+    },
+    'CV': (view, before, after) => {
+        if (after[0]) {
+            if (of(CONSONANTS, after[0])) {
+                if (after[1] && of(VOWELS, after[1])) {
                     return true;
                 }
             }
 
-            return false;
-        },
-        'CVCC': (view, before, after, syllableN) => {
-            if (after[0] && of(CONSONANTS, after[0])) {
-                return true;
-            }
+            if (of(VOWELS, after[0])) {
+                if (view[1] !== after[0] && !of(DIPHTHONGS, view[1] + after[0])) {
+                    return true;
+                }
 
-            return false;
-        },
-        'CVV': (view, before, after, syllableN) => {
-            if (DIPHTHONGS.includes(view.slice(1))) {
-                if (after[0] && of(CONSONANTS, after[0]) && after[1] && of(VOWELS, after[1])) {
+                if (view[1] === 'i' && of(DIPHTHONGS, view[1] + after[0])) {
+                    if (after[1] && of(CONSONANTS, after[1]) && !after[2]) {
+                        return true;
+                    }
+
+                    if (view[1] + after[0] === 'ie' && before.length > 0) {
+                        return true;
+                    }
+                }
+
+                if (!after[1]) {
+                    if (before.length === 1) {
+                        return true;
+                    }
+
+                    if (after[0] !== 'i' && view[1] !== after[0]) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    },
+    'CVC': (view, before, after) => {
+        if (after[0] && after[1]) {
+            if (of(CONSONANTS, after[0])) {
+                if (of(VOWELS, after[1])) {
                     return true;
                 }
             }
 
-            if (view[1] === view[2] && after[1] && of(VOWELS, after[1])) {
+            if (after[0] + after[1] == 'tr') { // foreign
                 return true;
             }
+        }
 
-            if (view[1] !== view[2] && after[0] && of(VOWELS, after[0])) {
-                return true;
-            }
-
-            return false;
-        },
-        'CVVC': (view, before, after, syllableN) => {
+        return false;
+    },
+    'CVCC': (view, before, after) => {
+        if (after[0] && of(CONSONANTS, after[0])) {
             return true;
-        },
-        'VV': (view, before, after, syllableN) => {
-            if (DIPHTHONGS.includes(view)) {
+        }
+
+        return false;
+    },
+    'CVV': (view, before, after) => {
+        if (DIPHTHONGS.includes(view.slice(1))) {
+            if (after[0] && of(CONSONANTS, after[0]) && after[1] && of(VOWELS, after[1])) {
                 return true;
             }
+        }
 
-            return false;
-        },
-        'VCC': (view, before, after, syllableN) => {
-            if (after[0] && of(CONSONANTS, after[0])) {
-                return true;
-            }
-
-            return false;
-        },
-        'CCV': (view, before, after, syllableN) => { // foreign
-            if (of(FOREIGN_CLUSTER, view[0] + view[1]) && after[0] &&
-                of(FOREIGN_CONSONANTS, after[0])) {
-                return true;
-            }
-
-            if (!of(FOREIGN_CLUSTER, view[0] + view[1])) {
-                return true;
-            }
-
-            return false;
-        },
-        'CCVC': (view, before, after, syllableN) => {
-            if (view[0] + view[1] == 'tr') {
-                return true;
-            }
-
-            return false;
-        },
-        'CCVCC': (view, before, after, syllableN) => {
+        if (view[1] === view[2] && after[1] && of(VOWELS, after[1])) {
             return true;
-        },
-        'CCVV': (view, before, after, syllableN) => {
-            if (view[2] === view[3] && after[0] && after[1] && isType(after[0] + after[1], 'CV')) {
-                return true;
-            }
+        }
 
-            return false;
-        },
-        'CCVVC': (view, before, after, syllableN) => {
+        if (view[1] !== view[2] && after[0] && of(VOWELS, after[0])) {
             return true;
-        },
-        'sCCVC': (view, before, after, syllableN) => {
-            if (after[0] && view[4] == after[0]) {
-                return true;
-            }
+        }
 
-            return false;
-        },
-        'sCCVCC': (view, before, after, syllableN) => {
+        return false;
+    },
+    'CVVC': (view, before, after) => {
+        return true;
+    },
+    'VV': (view, before, after) => {
+        if (DIPHTHONGS.includes(view) && before.length === 0) {
             return true;
-        },
-    };
+        }
 
-function isSyllable(view: string, before = '', after = '', syllableN: number) {
+        return false;
+    },
+    'VCC': (view, before, after) => {
+        if (after[0] && of(CONSONANTS, after[0])) {
+            return true;
+        }
+
+        return false;
+    },
+    'CCV': (view, before, after) => { // foreign
+        if (of(FOREIGN_CLUSTER, view[0] + view[1]) && after[0] &&
+            of(FOREIGN_CONSONANTS, after[0])) {
+            return true;
+        }
+
+        if (!of(FOREIGN_CLUSTER, view[0] + view[1])) {
+            return true;
+        }
+
+        return false;
+    },
+    'CCVC': (view, before, after) => {
+        if (view[0] + view[1] == 'tr') {
+            return true;
+        }
+
+        return false;
+    },
+    'CCVCC': (view, before, after) => {
+        return true;
+    },
+    'CCVV': (view, before, after) => {
+        if (view[2] === view[3] && after[0] && after[1] && isType(after[0] + after[1], 'CV')) {
+            return true;
+        }
+
+        return false;
+    },
+    'CCVVC': (view, before, after) => {
+        return true;
+    },
+    'sCCVC': (view, before, after) => {
+        if (after[0] && view[4] == after[0]) {
+            return true;
+        }
+
+        return false;
+    },
+    'sCCVCC': (view, before, after) => {
+        return true;
+    },
+};
+
+function isSyllable(view: string, before = '', after = '') {
     const type = mapType(view);
     console.log(`finding handler for "${type}" "${view}"`);
 
     if (type in matchers) {
         console.log(`handler found for "${type}" "${view}"`);
         console.log({type, before, view, after}); // DEBUG
-        return matchers[type](view, before, after, syllableN);
+        return matchers[type](view, before, after);
     }
 
     console.log(`handler not found for "${type}", returning to buffer`);
@@ -239,7 +238,7 @@ function getWordSyllables(word: string) {
         const before = word.slice(0, start);
         const after = word.slice(before.length + buffer.length);
 
-        if (isSyllable(buffer, before, after, syllables.length)) {
+        if (isSyllable(buffer, before, after)) {
             syllables.push(buffer);
             buffer = '';
         }
