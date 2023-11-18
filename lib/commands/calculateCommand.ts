@@ -1,6 +1,6 @@
 import {PrivMsgEvent} from 'irc-framework';
 
-import {SUPPORTED_CHARS, SYMBOLS, calculate} from './functions/calculation';
+import {SUPPORTED_CHARS, SYMBOLS, calculate} from './resources/calculation';
 import {Command} from '../command';
 import {Context} from '../util';
 

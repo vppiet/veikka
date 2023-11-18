@@ -219,7 +219,6 @@ function isSyllable(view: string, before = '', after = '') {
 }
 
 function getWordSyllables(word: string) {
-    word = word.trim();
     const syllables: string[] = [];
     let buffer = '';
 
