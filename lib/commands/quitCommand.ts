@@ -6,9 +6,9 @@ import {Context} from '../util';
 class QuitCommand extends Command {
     constructor() {
         super('.', 'sulje', [
-            '.sulje',
+            '.sulje [viesti]',
             'Sulje botti.',
-        ], 0, 0, PRIVILEGE_LEVEL.ADMIN);
+        ], 0, 1, PRIVILEGE_LEVEL.ADMIN);
     }
 
     getEventName(): string {
@@ -16,9 +16,19 @@ class QuitCommand extends Command {
     }
 
     listener(this: Context<QuitCommand>, event: PrivMsgEvent): void {
-        if (!this.listener.match(event.message, event.ident, event.hostname)) return;
+        const cmd = this.listener;
+        const client = this.client;
 
-        this.client.quit(Bun.env['QUIT_MSG']);
+        if (!cmd.match(event.message, event.ident, event.hostname)) return;
+
+        const {opt} = cmd.parseParameters(event.message);
+        const quitMsg = opt[0];
+
+        if (quitMsg) {
+            client.quit(quitMsg);
+        } else {
+            client.quit(Bun.env['QUIT_MSG']);
+        }
     }
 }
 

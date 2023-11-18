@@ -28,11 +28,10 @@ class CurrentWeatherCommand extends Command {
         if (!cmd.match(event.message)) return;
 
         const {req} = cmd.parseParameters(event.message);
-        if (!req[0]) {
-            event.reply(cmd.createSay('Anna paikkakunta.'));
-        }
+        const location = req[0];
+
         const url = `${BASE_URL}/current.json?key=${Bun.env['WEATHER_API_KEY']}` +
-            `&q=${encodeURIComponent(req[0])}` +
+            `&q=${encodeURIComponent(location)}` +
             '&aqi=no&lang=fi';
         const response = await fetch(url);
 

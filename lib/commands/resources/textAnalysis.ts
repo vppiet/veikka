@@ -9,7 +9,7 @@ const DIPHTHONGS = [
     'oi', 'ou', 'ui', 'uo', 'yi', 'yö', 'äi', 'äy',
     'öi', 'öy',
 ];
-const FOREIGN_CLUSTER = ['br', 'fl', 'kl', 'kr', 'tr'];
+const FOREIGN_CLUSTER = ['br', 'fl', 'fr', 'kl', 'kr', 'tr'];
 
 function of(arr: string[], input: string) {
     if (!input || !input.length) {
@@ -49,6 +49,10 @@ const matchers: {[k: string]: (view: string, before: string, after: string) => b
                 if (after[1] && of(VOWELS, after[1])) {
                     return true;
                 }
+
+                if (after[1] && of(FOREIGN_CLUSTER, after[0] + after[1])) {
+                    return true;
+                }
             }
 
             if (of(VOWELS, after[0]) &&
@@ -69,23 +73,23 @@ const matchers: {[k: string]: (view: string, before: string, after: string) => b
     },
     'CV': (view, before, after) => {
         if (after[0]) {
-            if (of(CONSONANTS, after[0])) {
-                if (after[1] && of(VOWELS, after[1])) {
+            if (of(CONSONANTS, after[0]) && after[1]) {
+                if (of(FOREIGN_CLUSTER, after[0] + after[1]) && after[0] + after[1] !== 'tr') {
+                    return true;
+                }
+
+                if (of(VOWELS, after[1])) {
                     return true;
                 }
             }
 
             if (of(VOWELS, after[0])) {
-                if (view[1] !== after[0] && !of(DIPHTHONGS, view[1] + after[0])) {
-                    return true;
-                }
-
-                if (view[1] === 'i' && of(DIPHTHONGS, view[1] + after[0])) {
-                    if (after[1] && of(CONSONANTS, after[1]) && !after[2]) {
+                if (view[1] !== after[0]) {
+                    if (view[1] + after[0] === 'ie' && before.length > 0 && view[0] !== 't') {
                         return true;
                     }
 
-                    if (view[1] + after[0] === 'ie' && before.length > 0) {
+                    if (!of(DIPHTHONGS, view[1] + after[0])) {
                         return true;
                     }
                 }
@@ -133,8 +137,16 @@ const matchers: {[k: string]: (view: string, before: string, after: string) => b
             }
         }
 
-        if (view[1] === view[2] && after[1] && of(VOWELS, after[1])) {
-            return true;
+        if (view[1] === view[2]) {
+            if (after[0]) {
+                if (of(VOWELS, after[0])) {
+                    return true;
+                }
+
+                if (of(CONSONANTS, after[0]) && after[1] && of(VOWELS, after[1])) {
+                    return true;
+                }
+            }
         }
 
         if (view[1] !== view[2] && after[0] && of(VOWELS, after[0])) {
@@ -147,11 +159,18 @@ const matchers: {[k: string]: (view: string, before: string, after: string) => b
         return true;
     },
     'VV': (view, before, after) => {
+        if (after[0] && after[1] && isType(after[0] + after[1], 'CV')) {
+            return true;
+        }
+
         if (DIPHTHONGS.includes(view) && before.length === 0) {
             return true;
         }
 
         return false;
+    },
+    'VVC': (view, before, after) => {
+        return true;
     },
     'VCC': (view, before, after) => {
         if (after[0] && of(CONSONANTS, after[0])) {
@@ -173,7 +192,8 @@ const matchers: {[k: string]: (view: string, before: string, after: string) => b
         return false;
     },
     'CCVC': (view, before, after) => {
-        if (view[0] + view[1] == 'tr') {
+        if (of(FOREIGN_CLUSTER, view[0] + view[1]) &&
+            !(after[0] && after[1] && isType(after[0] + after[1], 'CC') && after[0] === after[1])) {
             return true;
         }
 
@@ -206,15 +226,11 @@ const matchers: {[k: string]: (view: string, before: string, after: string) => b
 
 function isSyllable(view: string, before = '', after = '') {
     const type = mapType(view);
-    console.log(`finding handler for "${type}" "${view}"`);
 
     if (type in matchers) {
-        console.log(`handler found for "${type}" "${view}"`);
-        console.log({type, before, view, after}); // DEBUG
         return matchers[type](view, before, after);
     }
 
-    console.log(`handler not found for "${type}", returning to buffer`);
     return false;
 }
 
@@ -222,14 +238,11 @@ function getWordSyllables(word: string) {
     const syllables: string[] = [];
     let buffer = '';
 
-    console.log('\n#####################', word, '#####################\n');
-
     for (let i = 0; i < word.length; i++) {
         buffer += word[i];
 
         if (i === word.length - 1) {
             syllables.push(buffer);
-            console.log({syllables});
             continue;
         }
 
@@ -241,8 +254,6 @@ function getWordSyllables(word: string) {
             syllables.push(buffer);
             buffer = '';
         }
-
-        console.log({syllables});
     }
 
     return syllables;

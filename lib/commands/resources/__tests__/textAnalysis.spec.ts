@@ -183,5 +183,16 @@ describe('textAnalysis', () => {
         expect(getWordSyllables('teatteri')).toEqual(['te', 'at', 'te', 'ri']);
         expect(getWordSyllables('Leo')).toEqual(['Le', 'o']);
         expect(getWordSyllables('Joel')).toEqual(['Jo', 'el']);
+        expect(getWordSyllables('vapaaehtoinen')).toEqual(['va', 'paa', 'eh', 'toi', 'nen']);
+        expect(getWordSyllables('korkeafrekvenssinen'))
+            .toEqual(['kor', 'ke', 'a', 'frek', 'vens', 'si', 'nen']);
+        expect(getWordSyllables('matalafrekvenssinen'))
+            .toEqual(['ma', 'ta', 'la', 'frek', 'vens', 'si', 'nen']);
+        expect(getWordSyllables('ekspatriaatti')).toEqual(['eks', 'pat', 'ri', 'aat', 'ti']);
+        expect(getWordSyllables('aate')).toEqual(['aa', 'te']);
+        expect(getWordSyllables('aatteidensa')).toEqual(['aat', 'tei', 'den', 'sa']);
+        expect(getWordSyllables('aatteellinen')).toEqual(['aat', 'teel', 'li', 'nen']);
+        expect(getWordSyllables('lääketiede')).toEqual(['lää', 'ke', 'tie', 'de']);
+        expect(getWordSyllables('')).toEqual([]);
     });
 });

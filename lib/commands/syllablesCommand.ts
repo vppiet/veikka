@@ -1,5 +1,6 @@
-import {Context} from '../util';
 import {PrivMsgEvent} from '../../types/irc-framework';
+
+import {Context} from '../util';
 import {Command} from '../command';
 import {getWordSyllables} from './resources/textAnalysis';
 
@@ -8,7 +9,6 @@ class SyllablesCommand extends Command {
         super('.', 'tavut', [
             '.tavut <sana>',
             'Hae sanan tavut.',
-            'Ei tue tällä hetkellä: yhdyssanoja, etuliitteitä tai erikoismerkkejä.',
         ], 1);
     }
 
