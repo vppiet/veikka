@@ -5,7 +5,7 @@
   "main": "dist/deploy.js",
   "scripts": {
     "start": "bun run deploy.ts",
-    "debug": "bun --inspect deploy.ts",
+    "debug": "bun --inspect-brk deploy.ts",
     "dev": "bun --watch run deploy.ts",
     "test": "bun test"
   },

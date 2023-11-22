@@ -4,10 +4,11 @@ import {HelpCommand} from './lib/commands/helpCommand';
 import {QuitCommand} from './lib/commands/quitCommand';
 import {JoinCommand} from './lib/commands/joinCommand';
 import {ReminderCommand} from './lib/commands/reminderCommand';
-import {CurrentWeatherCommand} from 'commands/weatherCommand';
-import {CalculateCommand} from 'commands/calculateCommand';
-import {SyllablesCommand} from 'commands/syllablesCommand';
-import {AstroCommand} from 'commands/astroCommand';
+import {CurrentWeatherCommand} from './lib/commands/weatherCommand';
+import {CalculateCommand} from './lib/commands/calculateCommand';
+import {PoemMetreCommand} from './lib/commands/poemMetreCommand';
+import {AstroCommand} from './lib/commands/astroCommand';
+import {DebugCommand} from './lib/commands/debugCommand';
 
 const veikka = await Veikka.create();
 const db = veikka.db;
@@ -19,8 +20,9 @@ veikka.addCommand(new HelpCommand())
     .addCommand(new ReminderCommand(db))
     .addCommand(new CurrentWeatherCommand())
     .addCommand(new CalculateCommand())
-    .addCommand(new SyllablesCommand())
-    .addCommand(new AstroCommand());
+    .addCommand(new PoemMetreCommand(db))
+    .addCommand(new AstroCommand())
+    .addCommand(new DebugCommand());
 
 veikka.connect({
     nick: Bun.env['NICK'],

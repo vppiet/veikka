@@ -23,10 +23,10 @@ function format12To24h(time: string) {
 class AstroCommand extends Command {
     constructor() {
         super('.', 'astro', [
-            '.astro <paikkakunta>, [pvämäärä]',
-            'Hae kuun ja auringon tiedot paikkakunnan ja päivämäärän perusteella. ' +
-            'Jos päivämäärää ei anneta, käytetään nykyistä päivämäärää.',
-            'Aika-argumentti on oltava muodossa "18.11.2023".',
+            '.astro <paikkakunta>',
+            'Hae kuun ja auringon tiedot paikkakunnan perusteella.' +
+            'Tiedot kuluvan päivän alusta (klo 00:00), joten esim. kuun valaistumisaste voi' +
+            'erota nykyhetkestä.',
         ], 1, 1);
     }
 
@@ -39,21 +39,15 @@ class AstroCommand extends Command {
 
         if (!cmd.match(event.message)) return;
 
-        const {req, opt} = cmd.parseParameters(event.message);
+        const {req} = cmd.parseParameters(event.message);
         if (!req[0]) {
             event.reply(cmd.createSay('Anna paikkakunta.'));
         }
 
         const location = req[0];
-        const date = opt[0] ? parse(opt[0], DATE_FORMAT, new Date()) : new Date();
-        if (Number.isNaN(date.getTime())) {
-            event.reply(cmd.createSay('Päivämäärää ei pystytty tulkitsemaan :|'));
-            return;
-        }
 
         const url = `${BASE_URL}/astronomy.json?key=${Bun.env['WEATHER_API_KEY']}` +
-            `&q=${encodeURIComponent(location)}` +
-            `&dt=${formatISO(date, {representation: 'date'})}`;
+            `&q=${encodeURIComponent(location)}`;
         const response = await fetch(url);
 
         if (!response.ok) {
@@ -82,7 +76,7 @@ class AstroCommand extends Command {
             `Kuu: ${MOON_PHASES_EN_FI[astro.moon_phase].toLowerCase()} ` +
                 `(${astro.moon_illumination} %) ` +
                 `${UP_ARROW}${moonrise} ${DOWN_ARROW}${moonset}`,
-            `${format(date, DATE_FORMAT)} 00:00`,
+            `${format(new Date(), DATE_FORMAT)} 00:00`,
         ));
     }
 }

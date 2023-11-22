@@ -40,14 +40,14 @@ abstract class Command implements IrcEventListener {
         str = str.trimStart().toLowerCase();
         const cmd = this.getPrefixedName().toLowerCase();
 
-        if (!str.startsWith(cmd)) return;
+        if (!str.startsWith(cmd)) return false;
 
         // next possible character is a space
-        if (str.length > cmd.length && !(str[cmd.length] === ' ')) return;
+        if (str.length > cmd.length && !(str[cmd.length] === ' ')) return false;
 
         if (this.privilegeLevel === PRIVILEGE_LEVEL.ADMIN) {
-            if (ident === undefined || hostname === undefined) return;
-            if (!isAdmin(ident, hostname)) return;
+            if (ident === undefined || hostname === undefined) return false;
+            if (!isAdmin(ident, hostname)) return false;
         }
 
         const params = str.slice(cmd.length)

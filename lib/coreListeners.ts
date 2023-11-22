@@ -22,10 +22,10 @@ class SocketCloseListener implements IrcEventListener {
 
     listener(this: Context<SocketCloseListener>): void {
         this.client.publishers.forEach((p) => p.stopTimer());
-        this.client.db.close();
         this.client.commands
             .filter((c): c is Command & Closeable => isType<Closeable, Command>(c, ['close']))
             .forEach((c) => c.close(this.client));
+        this.client.db.close();
     }
 }
 

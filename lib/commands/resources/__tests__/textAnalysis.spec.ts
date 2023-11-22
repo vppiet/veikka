@@ -1,198 +1,249 @@
-import {describe, test, expect} from 'bun:test';
+import {describe, test, expect, beforeAll, mock, jest} from 'bun:test';
+import {Database} from 'bun:sqlite';
 
-import {getWordSyllables} from '../textAnalysis';
+import {NounTable} from '../../../db/noun';
+import {Syllabificator} from '../textAnalysis';
 
-/*
-test cases based on:
-- https://fi.wikipedia.org/wiki/Diftongi
-- https://kaino.kotus.fi/visk/sisallys.php?p=11
-- https://www.kielikello.fi/-/tavun-rajat
-- https://www.kielikello.fi/-/agronomi-mutta-aggressiivinen-konsonanttiyhtymista-
-ja-niiden-kirjoitusasusta
-*/
+mock.module('bun:sqlite', () => {
+    return {Database: jest.fn()};
+});
+
+mock.module('../../../db/noun.ts', () => {
+    return {
+        NounTable: jest.fn(() => {
+            return {
+                getAllByBegin: {
+                    all: jest.fn((word: string) => {
+                        const rows = [
+                            {word: 'eristys'},
+                            {word: 'armahdus'},
+                        ];
+                        return rows.filter((r) => r.word.startsWith(word));
+                    }),
+                },
+            };
+        }),
+    };
+});
 
 describe('textAnalysis', () => {
-    test.only('getWordSyllables(): diphthongs', () => {
-        expect(getWordSyllables('suotta')).toEqual(['suot', 'ta']);
-        expect(getWordSyllables('Suomi')).toEqual(['Suo', 'mi']);
+    let syllabificator: Syllabificator;
+    let tableMock: NounTable;
 
-        expect(getWordSyllables('Suomen')).toEqual(['Suo', 'men']);
-        expect(getWordSyllables('kouluissa')).toEqual(['kou', 'luis', 'sa']);
-        expect(getWordSyllables('hiukan')).toEqual(['hiu', 'kan']);
-        expect(getWordSyllables('ihaillaan')).toEqual(['i', 'hail', 'laan']);
-        expect(getWordSyllables('syksyisinä')).toEqual(['syk', 'syi', 'si', 'nä']);
-        expect(getWordSyllables('työpäivinä')).toEqual(['työ', 'päi', 'vi', 'nä']);
-        expect(getWordSyllables('meidän')).toEqual(['mei', 'dän']);
-        expect(getWordSyllables('poikien')).toEqual(['poi', 'ki', 'en']);
-        expect(getWordSyllables('höyläystöiden')).toEqual(['höy', 'läys', 'töi', 'den']);
-        expect(getWordSyllables('kauneutta')).toEqual(['kau', 'neut', 'ta']);
+    beforeAll(() => {
+        tableMock = new NounTable(new Database());
+        syllabificator = new Syllabificator(tableMock);
     });
 
-    test.only('getWordSyllables(): CV', () => {
-        expect(getWordSyllables('jana')).toEqual(['ja', 'na']);
-        expect(getWordSyllables('katosi')).toEqual(['ka', 'to', 'si']);
-        expect(getWordSyllables('hedelmä')).toEqual(['he', 'del', 'mä']);
+    /*
+    test cases mostly based on:
+    - https://fi.wikipedia.org/wiki/Diftongi
+    - https://kaino.kotus.fi/visk/sisallys.php?p=11
+    - https://www.kielikello.fi/-/tavun-rajat
+    - https://www.kielikello.fi/-/agronomi-mutta-aggressiivinen-konsonanttiyhtymista-
+    ja-niiden-kirjoitusasusta
+    */
+
+    test('syllabificator.getSyllables(): diphthongs', () => {
+        expect(syllabificator.getSyllables('suotta')).toEqual(['suot', 'ta']);
+        expect(syllabificator.getSyllables('Suomi')).toEqual(['Suo', 'mi']);
+
+        expect(syllabificator.getSyllables('Suomen')).toEqual(['Suo', 'men']);
+        expect(syllabificator.getSyllables('kouluissa')).toEqual(['kou', 'luis', 'sa']);
+        expect(syllabificator.getSyllables('hiukan')).toEqual(['hiu', 'kan']);
+        expect(syllabificator.getSyllables('ihaillaan')).toEqual(['i', 'hail', 'laan']);
+        expect(syllabificator.getSyllables('syksyisinä')).toEqual(['syk', 'syi', 'si', 'nä']);
+        expect(syllabificator.getSyllables('työpäivinä')).toEqual(['työ', 'päi', 'vi', 'nä']);
+        expect(syllabificator.getSyllables('meidän')).toEqual(['mei', 'dän']);
+        expect(syllabificator.getSyllables('poikien')).toEqual(['poi', 'ki', 'en']);
+        expect(syllabificator.getSyllables('höyläystöiden')).toEqual(['höy', 'läys', 'töi', 'den']);
+        expect(syllabificator.getSyllables('kauneutta')).toEqual(['kau', 'neut', 'ta']);
     });
 
-    test.only('getWordSyllables(): CVC', () => {
-        expect(getWordSyllables('kasku')).toEqual(['kas', 'ku']);
-        expect(getWordSyllables('raskas')).toEqual(['ras', 'kas']);
-        expect(getWordSyllables('raskaskulkuinen')).toEqual(['ras', 'kas', 'kul', 'kui', 'nen']);
-        expect(getWordSyllables('kasvit')).toEqual(['kas', 'vit']);
-        expect(getWordSyllables('naapurusto')).toEqual(['naa', 'pu', 'rus', 'to']);
-        expect(getWordSyllables('naapurit')).toEqual(['naa', 'pu', 'rit']);
+    test('syllabificator.getSyllables(): CV', () => {
+        expect(syllabificator.getSyllables('jana')).toEqual(['ja', 'na']);
+        expect(syllabificator.getSyllables('katosi')).toEqual(['ka', 'to', 'si']);
+        expect(syllabificator.getSyllables('hedelmä')).toEqual(['he', 'del', 'mä']);
     });
 
-    test.only('getWordSyllables(): CVCC', () => {
-        expect(getWordSyllables('myrsky')).toEqual(['myrs', 'ky']);
-        expect(getWordSyllables('eversti')).toEqual(['e', 'vers', 'ti']);
-        expect(getWordSyllables('luutnantti'))
+    test('syllabificator.getSyllables(): CVC', () => {
+        expect(syllabificator.getSyllables('kasku')).toEqual(['kas', 'ku']);
+        expect(syllabificator.getSyllables('raskas')).toEqual(['ras', 'kas']);
+        expect(syllabificator.getSyllables('raskaskulkuinen'))
+            .toEqual(['ras', 'kas', 'kul', 'kui', 'nen']);
+        expect(syllabificator.getSyllables('kasvit')).toEqual(['kas', 'vit']);
+        expect(syllabificator.getSyllables('naapurusto')).toEqual(['naa', 'pu', 'rus', 'to']);
+        expect(syllabificator.getSyllables('naapurit')).toEqual(['naa', 'pu', 'rit']);
+    });
+
+    test('syllabificator.getSyllables(): CVCC', () => {
+        expect(syllabificator.getSyllables('myrsky')).toEqual(['myrs', 'ky']);
+        expect(syllabificator.getSyllables('eversti')).toEqual(['e', 'vers', 'ti']);
+        expect(syllabificator.getSyllables('luutnantti'))
             .toEqual(['luut', 'nant', 'ti']);
-        expect(getWordSyllables('katafalkki')).toEqual(['ka', 'ta', 'falk', 'ki']);
+        expect(syllabificator.getSyllables('katafalkki')).toEqual(['ka', 'ta', 'falk', 'ki']);
     });
 
-    test.only('getWordSyllables(): CVV', () => {
-        expect(getWordSyllables('täi')).toEqual(['täi']);
-        expect(getWordSyllables('vei')).toEqual(['vei']);
-        expect(getWordSyllables('epäily')).toEqual(['e', 'päi', 'ly']);
-        expect(getWordSyllables('antaa')).toEqual(['an', 'taa']);
-        expect(getWordSyllables('eliksiiri')).toEqual(['e', 'lik', 'sii', 'ri']);
-        expect(getWordSyllables('naapureita')).toEqual(['naa', 'pu', 'rei', 'ta']);
+    test('syllabificator.getSyllables(): CVV', () => {
+        expect(syllabificator.getSyllables('täi')).toEqual(['täi']);
+        expect(syllabificator.getSyllables('vei')).toEqual(['vei']);
+        expect(syllabificator.getSyllables('epäily')).toEqual(['e', 'päi', 'ly']);
+        expect(syllabificator.getSyllables('antaa')).toEqual(['an', 'taa']);
+        expect(syllabificator.getSyllables('eliksiiri')).toEqual(['e', 'lik', 'sii', 'ri']);
+        expect(syllabificator.getSyllables('naapureita')).toEqual(['naa', 'pu', 'rei', 'ta']);
     });
 
-    test.only('getWordSyllables(): CVVC', () => {
-        expect(getWordSyllables('puusto')).toEqual(['puus', 'to']);
-        expect(getWordSyllables('puista')).toEqual(['puis', 'ta']);
-        expect(getWordSyllables('kokeilla')).toEqual(['ko', 'keil', 'la']);
-        expect(getWordSyllables('avaruus')).toEqual(['a', 'va', 'ruus']);
-        expect(getWordSyllables('avaruutta')).toEqual(['a', 'va', 'ruut', 'ta']);
+    test('syllabificator.getSyllables(): CVVC', () => {
+        expect(syllabificator.getSyllables('puusto')).toEqual(['puus', 'to']);
+        expect(syllabificator.getSyllables('puista')).toEqual(['puis', 'ta']);
+        expect(syllabificator.getSyllables('kokeilla')).toEqual(['ko', 'keil', 'la']);
+        expect(syllabificator.getSyllables('avaruus')).toEqual(['a', 'va', 'ruus']);
+        expect(syllabificator.getSyllables('avaruutta')).toEqual(['a', 'va', 'ruut', 'ta']);
     });
 
-    test.only('getWordSyllables(): V', () => {
-        expect(getWordSyllables('apu')).toEqual(['a', 'pu']);
-        expect(getWordSyllables('säie')).toEqual(['säi', 'e']);
-        expect(getWordSyllables('avoin')).toEqual(['a', 'voin']);
-        expect(getWordSyllables('apu')).toEqual(['a', 'pu']);
-        expect(getWordSyllables('eversti')).toEqual(['e', 'vers', 'ti']);
-        expect(getWordSyllables('eliö')).toEqual(['e', 'li', 'ö']);
-        expect(getWordSyllables('aikoa')).toEqual(['ai', 'ko', 'a']);
+    test('syllabificator.getSyllables(): V', () => {
+        expect(syllabificator.getSyllables('apu')).toEqual(['a', 'pu']);
+        expect(syllabificator.getSyllables('säie')).toEqual(['säi', 'e']);
+        expect(syllabificator.getSyllables('avoin')).toEqual(['a', 'voin']);
+        expect(syllabificator.getSyllables('apu')).toEqual(['a', 'pu']);
+        expect(syllabificator.getSyllables('eversti')).toEqual(['e', 'vers', 'ti']);
+        expect(syllabificator.getSyllables('eliö')).toEqual(['e', 'li', 'ö']);
+        expect(syllabificator.getSyllables('aikoa')).toEqual(['ai', 'ko', 'a']);
     });
 
-    test.only('getWordSyllables(): VC', () => {
-        expect(getWordSyllables('äsken')).toEqual(['äs', 'ken']);
-        expect(getWordSyllables('kauan')).toEqual(['kau', 'an']);
-        expect(getWordSyllables('apeus')).toEqual(['a', 'peus']);
+    test('syllabificator.getSyllables(): VC', () => {
+        expect(syllabificator.getSyllables('äsken')).toEqual(['äs', 'ken']);
+        expect(syllabificator.getSyllables('kauan')).toEqual(['kau', 'an']);
+        expect(syllabificator.getSyllables('apeus')).toEqual(['a', 'peus']);
     });
 
-    test.only('getWordSyllables(): VCC', () => {
-        expect(getWordSyllables('irstas')).toEqual(['irs', 'tas']);
-        expect(getWordSyllables('aortta')).toEqual(['a', 'ort', 'ta']); // rare
-        expect(getWordSyllables('variantti')).toEqual(['va', 'ri', 'ant', 'ti']); // rare
+    test('syllabificator.getSyllables(): VCC', () => {
+        expect(syllabificator.getSyllables('irstas')).toEqual(['irs', 'tas']);
+        expect(syllabificator.getSyllables('aortta')).toEqual(['a', 'ort', 'ta']); // rare
+        expect(syllabificator.getSyllables('variantti')).toEqual(['va', 'ri', 'ant', 'ti']); // rare
     });
 
-    test.only('getWordSyllables(): VV', () => {
-        expect(getWordSyllables('uoma')).toEqual(['uo', 'ma']);
-        expect(getWordSyllables('kauaa')).toEqual(['kau', 'aa']);
-        expect(getWordSyllables('vihreää')).toEqual(['vih', 're', 'ää']);
+    test('syllabificator.getSyllables(): VV', () => {
+        expect(syllabificator.getSyllables('uoma')).toEqual(['uo', 'ma']);
+        expect(syllabificator.getSyllables('kauaa')).toEqual(['kau', 'aa']);
+        expect(syllabificator.getSyllables('vihreää')).toEqual(['vih', 're', 'ää']);
     });
 
-    test.only('getWordSyllables(): CCV foreign', () => {
-        expect(getWordSyllables('prosentti')).toEqual(['pro', 'sent', 'ti']);
-        expect(getWordSyllables('ekstra')).toEqual(['eks', 'tra']);
-        expect(getWordSyllables('katastrofi')).toEqual(['ka', 'tas', 'tro', 'fi']);
+    test('syllabificator.getSyllables(): CCV foreign', () => {
+        expect(syllabificator.getSyllables('prosentti')).toEqual(['pro', 'sent', 'ti']);
+        expect(syllabificator.getSyllables('ekstra')).toEqual(['eks', 'tra']);
+        expect(syllabificator.getSyllables('katastrofi')).toEqual(['ka', 'tas', 'tro', 'fi']);
     });
 
-    test.only('getWordSyllables(): CCVC foreign', () => {
-        expect(getWordSyllables('trendi')).toEqual(['tren', 'di']);
-        expect(getWordSyllables('abstrakti')).toEqual(['abs', 'trak', 'ti']);
+    test('syllabificator.getSyllables(): CCVC foreign', () => {
+        expect(syllabificator.getSyllables('trendi')).toEqual(['tren', 'di']);
+        expect(syllabificator.getSyllables('abstrakti')).toEqual(['abs', 'trak', 'ti']);
     });
 
-    test.only('getWordSyllables(): CCVCC foreign', () => {
-        expect(getWordSyllables('flunssa')).toEqual(['fluns', 'sa']);
+    test('syllabificator.getSyllables(): CCVCC foreign', () => {
+        expect(syllabificator.getSyllables('flunssa')).toEqual(['fluns', 'sa']);
     });
 
-    test.only('getWordSyllables(): CCVV foreign', () => {
-        expect(getWordSyllables('klaava')).toEqual(['klaa', 'va']);
-        expect(getWordSyllables('hamstraaja')).toEqual(['hams', 'traa', 'ja']);
-        expect(getWordSyllables('demonstraatio')).toEqual(['de', 'mons', 'traa', 'ti', 'o']);
+    test('syllabificator.getSyllables(): CCVV foreign', () => {
+        expect(syllabificator.getSyllables('klaava')).toEqual(['klaa', 'va']);
+        expect(syllabificator.getSyllables('hamstraaja')).toEqual(['hams', 'traa', 'ja']);
+        expect(syllabificator.getSyllables('demonstraatio'))
+            .toEqual(['de', 'mons', 'traa', 'ti', 'o']);
     });
 
-    test.only('getWordSyllables(): CCVVC foreign', () => {
-        expect(getWordSyllables('kraatteri')).toEqual(['kraat', 'te', 'ri']);
-        expect(getWordSyllables('maistraatti')).toEqual(['mais', 'traat', 'ti']);
-        expect(getWordSyllables('orkestrointi')).toEqual(['or', 'kes', 'troin', 'ti']);
+    test('syllabificator.getSyllables(): CCVVC foreign', () => {
+        expect(syllabificator.getSyllables('kraatteri')).toEqual(['kraat', 'te', 'ri']);
+        expect(syllabificator.getSyllables('maistraatti')).toEqual(['mais', 'traat', 'ti']);
+        expect(syllabificator.getSyllables('orkestrointi')).toEqual(['or', 'kes', 'troin', 'ti']);
     });
 
-    test.only('getWordSyllables(): sCCVVC foreign', () => {
-        expect(getWordSyllables('stressi')).toEqual(['stres', 'si']);
+    test('syllabificator.getSyllables(): sCCVVC foreign', () => {
+        expect(syllabificator.getSyllables('stressi')).toEqual(['stres', 'si']);
     });
 
-    test.only('getWordSyllables(): sCCVVC foreign', () => {
-        expect(getWordSyllables('sprinkleri')).toEqual(['sprink', 'le', 'ri']);
+    test('syllabificator.getSyllables(): sCCVVC foreign', () => {
+        expect(syllabificator.getSyllables('sprinkleri')).toEqual(['sprink', 'le', 'ri']);
     });
 
-    test.only('getWordSyllables(): miscellaneous', () => {
-        expect(getWordSyllables('kalja')).toEqual(['kal', 'ja']);
-        expect(getWordSyllables('limppari')).toEqual(['limp', 'pa', 'ri']);
-        expect(getWordSyllables('horisontti')).toEqual(['ho', 'ri', 'sont', 'ti']);
-        expect(getWordSyllables('kauhea')).toEqual(['kau', 'he', 'a']);
-        expect(getWordSyllables('ystävällinen')).toEqual(['ys', 'tä', 'väl', 'li', 'nen']);
-        expect(getWordSyllables('reitittää')).toEqual(['rei', 'tit', 'tää']);
+    test('syllabificator.getSyllables(): miscellaneous', () => {
+        expect(syllabificator.getSyllables('kalja')).toEqual(['kal', 'ja']);
+        expect(syllabificator.getSyllables('limppari')).toEqual(['limp', 'pa', 'ri']);
+        expect(syllabificator.getSyllables('horisontti')).toEqual(['ho', 'ri', 'sont', 'ti']);
+        expect(syllabificator.getSyllables('kauhea')).toEqual(['kau', 'he', 'a']);
+        expect(syllabificator.getSyllables('ystävällinen'))
+            .toEqual(['ys', 'tä', 'väl', 'li', 'nen']);
+        expect(syllabificator.getSyllables('reitittää')).toEqual(['rei', 'tit', 'tää']);
 
-        expect(getWordSyllables('etsiä')).toEqual(['et', 'si', 'ä']);
-        expect(getWordSyllables('yksiö')).toEqual(['yk', 'si', 'ö']);
-        expect(getWordSyllables('kielsi')).toEqual(['kiel', 'si']);
-        expect(getWordSyllables('miniää')).toEqual(['mi', 'ni', 'ää']);
-        expect(getWordSyllables('portti')).toEqual(['port', 'ti']);
-        expect(getWordSyllables('yrtti')).toEqual(['yrt', 'ti']);
-        expect(getWordSyllables('kaartui')).toEqual(['kaar', 'tui']);
-        expect(getWordSyllables('jäädään')).toEqual(['jää', 'dään']);
-        expect(getWordSyllables('äiti')).toEqual(['äi', 'ti']);
-        expect(getWordSyllables('asu')).toEqual(['a', 'su']);
-        expect(getWordSyllables('kehu')).toEqual(['ke', 'hu']);
-        expect(getWordSyllables('myyrä')).toEqual(['myy', 'rä']);
-        expect(getWordSyllables('säiliö')).toEqual(['säi', 'li', 'ö']);
-        expect(getWordSyllables('appi')).toEqual(['ap', 'pi']);
-        expect(getWordSyllables('käskyt')).toEqual(['käs', 'kyt']);
-        expect(getWordSyllables('alttari')).toEqual(['alt', 'ta', 'ri']);
-        expect(getWordSyllables('nuottaa')).toEqual(['nuot', 'taa']);
-        expect(getWordSyllables('peitteessä')).toEqual(['peit', 'tees', 'sä']);
+        expect(syllabificator.getSyllables('etsiä')).toEqual(['et', 'si', 'ä']);
+        expect(syllabificator.getSyllables('yksiö')).toEqual(['yk', 'si', 'ö']);
+        expect(syllabificator.getSyllables('kielsi')).toEqual(['kiel', 'si']);
+        expect(syllabificator.getSyllables('miniää')).toEqual(['mi', 'ni', 'ää']);
+        expect(syllabificator.getSyllables('portti')).toEqual(['port', 'ti']);
+        expect(syllabificator.getSyllables('yrtti')).toEqual(['yrt', 'ti']);
+        expect(syllabificator.getSyllables('kaartui')).toEqual(['kaar', 'tui']);
+        expect(syllabificator.getSyllables('jäädään')).toEqual(['jää', 'dään']);
+        expect(syllabificator.getSyllables('äiti')).toEqual(['äi', 'ti']);
+        expect(syllabificator.getSyllables('asu')).toEqual(['a', 'su']);
+        expect(syllabificator.getSyllables('kehu')).toEqual(['ke', 'hu']);
+        expect(syllabificator.getSyllables('myyrä')).toEqual(['myy', 'rä']);
+        expect(syllabificator.getSyllables('säiliö')).toEqual(['säi', 'li', 'ö']);
+        expect(syllabificator.getSyllables('appi')).toEqual(['ap', 'pi']);
+        expect(syllabificator.getSyllables('käskyt')).toEqual(['käs', 'kyt']);
+        expect(syllabificator.getSyllables('alttari')).toEqual(['alt', 'ta', 'ri']);
+        expect(syllabificator.getSyllables('nuottaa')).toEqual(['nuot', 'taa']);
+        expect(syllabificator.getSyllables('peitteessä')).toEqual(['peit', 'tees', 'sä']);
 
-        expect(getWordSyllables('leyhyä')).toEqual(['ley', 'hy', 'ä']);
-        expect(getWordSyllables('paperien')).toEqual(['pa', 'pe', 'ri', 'en']);
-        expect(getWordSyllables('hygienia')).toEqual(['hy', 'gi', 'e', 'ni', 'a']);
-        expect(getWordSyllables('vian')).toEqual(['vi', 'an']);
-        expect(getWordSyllables('koala')).toEqual(['ko', 'a', 'la']);
-        expect(getWordSyllables('dia')).toEqual(['di', 'a']);
-        expect(getWordSyllables('korkea')).toEqual(['kor', 'ke', 'a']);
-        expect(getWordSyllables('myllyä')).toEqual(['myl', 'ly', 'ä']);
-        expect(getWordSyllables('pian')).toEqual(['pi', 'an']);
-        expect(getWordSyllables('hion')).toEqual(['hi', 'on']);
-        expect(getWordSyllables('hioin')).toEqual(['hi', 'oin']);
-        expect(getWordSyllables('hioa')).toEqual(['hi', 'o', 'a']);
-        expect(getWordSyllables('rae')).toEqual(['ra', 'e']);
-        expect(getWordSyllables('koe')).toEqual(['ko', 'e']);
-        expect(getWordSyllables('aie')).toEqual(['ai', 'e']);
-        expect(getWordSyllables('raot')).toEqual(['ra', 'ot']);
-        expect(getWordSyllables('teos')).toEqual(['te', 'os']);
-        expect(getWordSyllables('teollisuus')).toEqual(['te', 'ol', 'li', 'suus']);
-        expect(getWordSyllables('piano')).toEqual(['pi', 'a', 'no']);
-        expect(getWordSyllables('biologi')).toEqual(['bi', 'o', 'lo', 'gi']);
-        expect(getWordSyllables('geometria')).toEqual(['ge', 'o', 'met', 'ri', 'a']);
-        expect(getWordSyllables('maestro')).toEqual(['ma', 'est', 'ro']);
-        expect(getWordSyllables('teatteri')).toEqual(['te', 'at', 'te', 'ri']);
-        expect(getWordSyllables('Leo')).toEqual(['Le', 'o']);
-        expect(getWordSyllables('Joel')).toEqual(['Jo', 'el']);
-        expect(getWordSyllables('vapaaehtoinen')).toEqual(['va', 'paa', 'eh', 'toi', 'nen']);
-        expect(getWordSyllables('korkeafrekvenssinen'))
+        expect(syllabificator.getSyllables('leyhyä')).toEqual(['ley', 'hy', 'ä']);
+        expect(syllabificator.getSyllables('paperien')).toEqual(['pa', 'pe', 'ri', 'en']);
+        expect(syllabificator.getSyllables('hygienia')).toEqual(['hy', 'gi', 'e', 'ni', 'a']);
+        expect(syllabificator.getSyllables('vian')).toEqual(['vi', 'an']);
+        expect(syllabificator.getSyllables('koala')).toEqual(['ko', 'a', 'la']);
+        expect(syllabificator.getSyllables('dia')).toEqual(['di', 'a']);
+        expect(syllabificator.getSyllables('korkea')).toEqual(['kor', 'ke', 'a']);
+        expect(syllabificator.getSyllables('myllyä')).toEqual(['myl', 'ly', 'ä']);
+        expect(syllabificator.getSyllables('pian')).toEqual(['pi', 'an']);
+        expect(syllabificator.getSyllables('hion')).toEqual(['hi', 'on']);
+        expect(syllabificator.getSyllables('hioin')).toEqual(['hi', 'oin']);
+        expect(syllabificator.getSyllables('hioa')).toEqual(['hi', 'o', 'a']);
+        expect(syllabificator.getSyllables('rae')).toEqual(['ra', 'e']);
+        expect(syllabificator.getSyllables('koe')).toEqual(['ko', 'e']);
+        expect(syllabificator.getSyllables('aie')).toEqual(['ai', 'e']);
+        expect(syllabificator.getSyllables('raot')).toEqual(['ra', 'ot']);
+        expect(syllabificator.getSyllables('teos')).toEqual(['te', 'os']);
+        expect(syllabificator.getSyllables('teollisuus')).toEqual(['te', 'ol', 'li', 'suus']);
+        expect(syllabificator.getSyllables('piano')).toEqual(['pi', 'a', 'no']);
+        expect(syllabificator.getSyllables('biologi')).toEqual(['bi', 'o', 'lo', 'gi']);
+        expect(syllabificator.getSyllables('geometria')).toEqual(['ge', 'o', 'met', 'ri', 'a']);
+        expect(syllabificator.getSyllables('maestro')).toEqual(['ma', 'est', 'ro']);
+        expect(syllabificator.getSyllables('teatteri')).toEqual(['te', 'at', 'te', 'ri']);
+        expect(syllabificator.getSyllables('Leo')).toEqual(['Le', 'o']);
+        expect(syllabificator.getSyllables('Joel')).toEqual(['Jo', 'el']);
+        expect(syllabificator.getSyllables('vapaaehtoinen'))
+            .toEqual(['va', 'paa', 'eh', 'toi', 'nen']);
+        expect(syllabificator.getSyllables('korkeafrekvenssinen'))
             .toEqual(['kor', 'ke', 'a', 'frek', 'vens', 'si', 'nen']);
-        expect(getWordSyllables('matalafrekvenssinen'))
+        expect(syllabificator.getSyllables('matalafrekvenssinen'))
             .toEqual(['ma', 'ta', 'la', 'frek', 'vens', 'si', 'nen']);
-        expect(getWordSyllables('ekspatriaatti')).toEqual(['eks', 'pat', 'ri', 'aat', 'ti']);
-        expect(getWordSyllables('aate')).toEqual(['aa', 'te']);
-        expect(getWordSyllables('aatteidensa')).toEqual(['aat', 'tei', 'den', 'sa']);
-        expect(getWordSyllables('aatteellinen')).toEqual(['aat', 'teel', 'li', 'nen']);
-        expect(getWordSyllables('lääketiede')).toEqual(['lää', 'ke', 'tie', 'de']);
-        expect(getWordSyllables('')).toEqual([]);
+        expect(syllabificator.getSyllables('ekspatriaatti'))
+            .toEqual(['eks', 'pat', 'ri', 'aat', 'ti']);
+        expect(syllabificator.getSyllables('aate')).toEqual(['aa', 'te']);
+        expect(syllabificator.getSyllables('aatteidensa')).toEqual(['aat', 'tei', 'den', 'sa']);
+        expect(syllabificator.getSyllables('aatteellinen')).toEqual(['aat', 'teel', 'li', 'nen']);
+        expect(syllabificator.getSyllables('lääketiede')).toEqual(['lää', 'ke', 'tie', 'de']);
+        expect(syllabificator.getSyllables('aurinko')).toEqual(['au', 'rin', 'ko']);
+        expect(syllabificator.getSyllables('ruusukoristeinen'))
+            .toEqual(['ruu', 'su', 'ko', 'ris', 'tei', 'nen']);
+        expect(syllabificator.getSyllables('anestesia')).toEqual(['a', 'nes', 'te', 'si', 'a']);
+        expect(syllabificator.getSyllables('ajallaan')).toEqual(['a', 'jal', 'laan']);
+        expect(syllabificator.getSyllables('eristysaika')).toEqual(['e', 'ris', 'tys', 'ai', 'ka']);
+        expect(syllabificator.getSyllables('eristysajan')).toEqual(['e', 'ris', 'tys', 'a', 'jan']);
+        expect(syllabificator.getSyllables('armahdusanomus'))
+            .toEqual(['ar', 'mah', 'dus', 'a', 'no', 'mus']);
+    });
+
+    test('syllabificator.getSyllables(): non-alphabet separated segments', () => {
+        expect(syllabificator.getSyllables('vaa\'an')).toEqual(['vaa', 'an']);
+        expect(syllabificator.getSyllables('i\'issä')).toEqual(['i', 'is', 'sä']);
+        expect(syllabificator.getSyllables('ala-aste')).toEqual(['a', 'la', 'as', 'te']);
     });
 });

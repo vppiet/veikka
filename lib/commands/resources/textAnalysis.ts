@@ -1,5 +1,7 @@
-const CONSONANTS = ['b', 'c', 'd', 'f', 'g',
-    'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v'];
+import {NounTable} from '../../db/noun';
+
+const CONSONANTS = ['b', 'c', 'd', 'f', 'g', 'h', 'j', 'k',
+    'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'z'];
 const FOREIGN_CONSONANTS = ['b', 'c', 'd', 'f', 'g', 'q'];
 const VOWELS = ['a', 'e', 'i', 'o', 'u', 'y', 'ä', 'ö'];
 const ALPHABETS = [...VOWELS, ...CONSONANTS];
@@ -11,12 +13,14 @@ const DIPHTHONGS = [
 ];
 const FOREIGN_CLUSTER = ['br', 'fl', 'fr', 'kl', 'kr', 'tr'];
 
+const SEGMENT_SEPARATORS = ['\'', '-'];
+
 function of(arr: string[], input: string) {
     if (!input || !input.length) {
         throw new Error(`Argument input was "${input}" and of type ${typeof input}`);
     }
 
-    return arr.includes(input);
+    return arr.includes(input.toLowerCase());
 }
 
 function mapType(input: string) {
@@ -30,8 +34,6 @@ function mapType(input: string) {
             type += 'V';
         } else if (of(CONSONANTS, char)) {
             type += 'C';
-        } else {
-            // TODO: non-v & non-c are handling
         }
     }
 
@@ -42,7 +44,7 @@ function isType(input: string, type: string) {
     return mapType(input) === type;
 }
 
-const matchers: {[k: string]: (view: string, before: string, after: string) => boolean} = {
+const MATCHERS: {[k: string]: (view: string, before: string, after: string) => boolean} = {
     'V': (view, before, after) => {
         if (after[0]) {
             if (of(CONSONANTS, after[0])) {
@@ -55,8 +57,8 @@ const matchers: {[k: string]: (view: string, before: string, after: string) => b
                 }
             }
 
-            if (of(VOWELS, after[0]) &&
-                view[0] !== after[0] && !DIPHTHONGS.includes(view[0] + after[0])) {
+            if (of(VOWELS, after[0]) && view[0] !== after[0] &&
+                !of(DIPHTHONGS, view[0] + after[0])) {
                 return true;
             }
         }
@@ -119,6 +121,10 @@ const matchers: {[k: string]: (view: string, before: string, after: string) => b
             if (after[0] + after[1] == 'tr') { // foreign
                 return true;
             }
+
+            if (before[before.length - 1] === 's' && view[2] === 's') {
+                return true;
+            }
         }
 
         return false;
@@ -131,7 +137,7 @@ const matchers: {[k: string]: (view: string, before: string, after: string) => b
         return false;
     },
     'CVV': (view, before, after) => {
-        if (DIPHTHONGS.includes(view.slice(1))) {
+        if (of(DIPHTHONGS, view.slice(1))) {
             if (after[0] && of(CONSONANTS, after[0]) && after[1] && of(VOWELS, after[1])) {
                 return true;
             }
@@ -163,7 +169,7 @@ const matchers: {[k: string]: (view: string, before: string, after: string) => b
             return true;
         }
 
-        if (DIPHTHONGS.includes(view) && before.length === 0) {
+        if (of(DIPHTHONGS, view) && before.length === 0) {
             return true;
         }
 
@@ -193,7 +199,8 @@ const matchers: {[k: string]: (view: string, before: string, after: string) => b
     },
     'CCVC': (view, before, after) => {
         if (of(FOREIGN_CLUSTER, view[0] + view[1]) &&
-            !(after[0] && after[1] && isType(after[0] + after[1], 'CC') && after[0] === after[1])) {
+            !(after[0] && after[1] && isType(after[0] + after[1], 'CC') &&
+            after[0] === after[1])) {
             return true;
         }
 
@@ -224,39 +231,103 @@ const matchers: {[k: string]: (view: string, before: string, after: string) => b
     },
 };
 
-function isSyllable(view: string, before = '', after = '') {
-    const type = mapType(view);
+/** @this Syllabificator */
+function segmentSplitter(this: Syllabificator, str: string) {
+    const segments: string[] = [];
 
-    if (type in matchers) {
-        return matchers[type](view, before, after);
-    }
+    let segment = '';
+    for (let i = 0; i < str.length; i++) {
+        const char = str[i];
 
-    return false;
-}
-
-function getWordSyllables(word: string) {
-    const syllables: string[] = [];
-    let buffer = '';
-
-    for (let i = 0; i < word.length; i++) {
-        buffer += word[i];
-
-        if (i === word.length - 1) {
-            syllables.push(buffer);
-            continue;
+        if (of(SEGMENT_SEPARATORS, char)) {
+            if (i == 0 && i === str.length - 1) {
+                continue;
+            } else {
+                segments.push(segment);
+                segment = '';
+                continue;
+            }
         }
 
-        const start = i - buffer.length + 1;
-        const before = word.slice(0, start);
-        const after = word.slice(before.length + buffer.length);
+        segment += char;
 
-        if (isSyllable(buffer, before, after)) {
-            syllables.push(buffer);
-            buffer = '';
+        if (segment.length >= 3) {
+            const after = str.slice(i + 1);
+            const noun = this.getNounByBegin(segment, after);
+
+            if (noun) {
+                const start = i - segment.length;
+                const end = start + noun.length;
+                segments.push(str.slice(i - segment.length + 1, end + 1));
+                i = end;
+                segment = '';
+            }
         }
     }
 
-    return syllables;
+    if (segment) {
+        segments.push(segment);
+    }
+
+    return segments;
 }
 
-export {getWordSyllables};
+class Syllabificator {
+    splitter = {[Symbol.split]: segmentSplitter.bind(this)};
+    nounTable: NounTable;
+
+    constructor(nounTable: NounTable) {
+        this.nounTable = nounTable;
+    }
+
+    getSyllables(input: string) {
+        const segments = input.split(this.splitter);
+        const syllables: string[] = [];
+
+        for (const segment of segments) {
+            let buffer = '';
+
+            for (let i = 0; i < segment.length; i++) {
+                buffer += segment[i];
+
+                if (i === segment.length - 1) {
+                    syllables.push(buffer);
+                    continue;
+                }
+
+                const start = i - buffer.length + 1;
+                const before = segment.slice(0, start);
+                const after = segment.slice(before.length + buffer.length);
+
+                if (this.isSyllable(buffer, before, after)) {
+                    syllables.push(buffer);
+                    buffer = '';
+                }
+            }
+        }
+
+        return syllables;
+    }
+
+    isSyllable(view: string, before = '', after = '') {
+        const type = mapType(view);
+
+        if (type in MATCHERS) {
+            return MATCHERS[type](view, before, after);
+        }
+
+        return false;
+    }
+
+    getNounByBegin(begin: string, after: string) {
+        const str = begin + (after !== undefined ? after : '');
+        const rows = this.nounTable.getAllByBegin.all(begin);
+        const matches = rows.map((r) => r.word)
+            .filter((w) => str.startsWith(w))
+            .sort((a, b) => b.length - a.length);
+
+        return matches[0] ? matches[0] : '';
+    }
+}
+
+export {Syllabificator};
