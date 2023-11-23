@@ -77,10 +77,6 @@ abstract class Command implements IrcEventListener {
         };
     }
 
-    static joinWithSeparator(...input: string[]) {
-        return input.join(' | ');
-    }
-
     createSay(...input: string[]) {
         const capitalizedName = capitalize(this.name);
         input.unshift(capitalizedName);
