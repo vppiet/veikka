@@ -21,7 +21,7 @@ class PoemMetreCommand extends Command implements Initialisable, Closeable {
                 'Vinoviiva runossa erottaa säkeen toisistaan.',
         ], 1);
         this.nounTable = new NounTable(conn);
-        this.logger = getLogger('haikuCommand');
+        this.logger = getLogger('poemMetreCommand');
         this.syllabificator = new Syllabificator(this.nounTable);
     }
 
@@ -48,7 +48,7 @@ class PoemMetreCommand extends Command implements Initialisable, Closeable {
         this.logger.debug(`Inserted ${insertCount} nouns.`);
     }
 
-    close(client: Veikka): void {
+    close(client: Veikka) {
         this.nounTable.finalizeAll();
     }
 

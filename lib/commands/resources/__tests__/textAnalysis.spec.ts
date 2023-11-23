@@ -17,6 +17,8 @@ mock.module('../../../db/noun.ts', () => {
                         const rows = [
                             {word: 'eristys'},
                             {word: 'armahdus'},
+                            {word: 'ero'},
+                            {word: 'auto'},
                         ];
                         return rows.filter((r) => r.word.startsWith(word));
                     }),
@@ -239,6 +241,22 @@ describe('textAnalysis', () => {
         expect(syllabificator.getSyllables('eristysajan')).toEqual(['e', 'ris', 'tys', 'a', 'jan']);
         expect(syllabificator.getSyllables('armahdusanomus'))
             .toEqual(['ar', 'mah', 'dus', 'a', 'no', 'mus']);
+
+        expect(syllabificator.getSyllables('erottaa')).toEqual(['e', 'rot', 'taa']);
+
+        expect(syllabificator.getSyllables('auto')).toEqual(['au', 'to']);
+        expect(syllabificator.getSyllables('auton')).toEqual(['au', 'ton']);
+        expect(syllabificator.getSyllables('autoa')).toEqual(['au', 'to', 'a']);
+        expect(syllabificator.getSyllables('autoon')).toEqual(['au', 'toon']);
+        expect(syllabificator.getSyllables('autot')).toEqual(['au', 'tot']);
+        expect(syllabificator.getSyllables('autojen')).toEqual(['au', 'to', 'jen']);
+        expect(syllabificator.getSyllables('autot')).toEqual(['au', 'tot']);
+        expect(syllabificator.getSyllables('autoja')).toEqual(['au', 'to', 'ja']);
+        expect(syllabificator.getSyllables('autoihin')).toEqual(['au', 'toi', 'hin']);
+        expect(syllabificator.getSyllables('autotta')).toEqual(['au', 'tot', 'ta']);
+        expect(syllabificator.getSyllables('autoitta')).toEqual(['au', 'toit', 'ta']);
+        expect(syllabificator.getSyllables('autoritäärinen'))
+            .toEqual(['au', 'to', 'ri', 'tää', 'ri', 'nen']);
     });
 
     test('syllabificator.getSyllables(): non-alphabet separated segments', () => {

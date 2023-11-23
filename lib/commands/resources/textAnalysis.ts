@@ -251,13 +251,19 @@ function segmentSplitter(this: Syllabificator, str: string) {
 
         segment += char;
 
-        if (segment.length >= 3) {
-            const after = str.slice(i + 1);
-            const noun = this.getNounByBegin(segment, after);
+        const after = str.slice(i + 1);
 
-            if (noun) {
-                const start = i - segment.length;
-                const end = start + noun.length;
+        // guess ahead if there's a noun
+        if (segment.length >= 3) {
+            // autotta
+            // autoitta
+            const noun = this.getLongestNounByBegin(segment, after);
+            const start = i - segment.length;
+            const end = start + noun.length;
+            const afterNoun = str.slice(end + 1);
+
+            if (noun && afterNoun.length >= 3 && !isType(afterNoun.slice(0, 2), 'CC') &&
+                !of(DIPHTHONGS, noun[noun.length - 1] + str[end + 1])) {
                 segments.push(str.slice(i - segment.length + 1, end + 1));
                 i = end;
                 segment = '';
@@ -319,12 +325,10 @@ class Syllabificator {
         return false;
     }
 
-    getNounByBegin(begin: string, after: string) {
+    getLongestNounByBegin(begin: string, after: string) {
         const str = begin + (after !== undefined ? after : '');
         const rows = this.nounTable.getAllByBegin.all(begin);
-        const matches = rows.map((r) => r.word)
-            .filter((w) => str.startsWith(w))
-            .sort((a, b) => b.length - a.length);
+        const matches = rows.map((r) => r.word).sort((a, b) => b.length - a.length);
 
         return matches[0] ? matches[0] : '';
     }
