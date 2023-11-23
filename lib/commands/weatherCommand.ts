@@ -52,7 +52,8 @@ class CurrentWeatherCommand extends Command {
         const windMps = (body.current.wind_kph * KPH_TO_MPS_MULTIPLIER).toFixed(1);
         const gustMps = (body.current.gust_kph * KPH_TO_MPS_MULTIPLIER).toFixed(1);
         event.reply(cmd.createSay(
-            `${body.location.name}, ${body.location.country}`,
+            `${body.location.name}, ${body.location.region}, ${body.location.country}`,
+            `${body.location.lat}°, ${body.location.lon}°`,
             `${body.current.temp_c} °C (${body.current.feelslike_c} °C)`,
             `${windMps} m/s (${gustMps} m/s)`,
             `${body.current.humidity} %`,
