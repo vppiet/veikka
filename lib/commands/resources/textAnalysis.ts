@@ -255,8 +255,6 @@ function segmentSplitter(this: Syllabificator, str: string) {
 
         // guess ahead if there's a noun
         if (segment.length >= 3) {
-            // autotta
-            // autoitta
             const noun = this.getLongestNounByBegin(segment, after);
             const start = i - segment.length;
             const end = start + noun.length;
@@ -328,7 +326,9 @@ class Syllabificator {
     getLongestNounByBegin(begin: string, after: string) {
         const str = begin + (after !== undefined ? after : '');
         const rows = this.nounTable.getAllByBegin.all(begin);
-        const matches = rows.map((r) => r.word).sort((a, b) => b.length - a.length);
+        const matches = rows.map((r) => r.word)
+            .filter((w) => str.startsWith(w))
+            .sort((a, b) => b.length - a.length);
 
         return matches[0] ? matches[0] : '';
     }

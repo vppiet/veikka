@@ -15,6 +15,7 @@ mock.module('../../../db/noun.ts', () => {
                 getAllByBegin: {
                     all: jest.fn((word: string) => {
                         const rows = [
+                            {word: 'ystävä'},
                             {word: 'eristys'},
                             {word: 'armahdus'},
                             {word: 'ero'},
@@ -257,6 +258,7 @@ describe('textAnalysis', () => {
         expect(syllabificator.getSyllables('autoitta')).toEqual(['au', 'toit', 'ta']);
         expect(syllabificator.getSyllables('autoritäärinen'))
             .toEqual(['au', 'to', 'ri', 'tää', 'ri', 'nen']);
+        expect(syllabificator.getSyllables('elektroni')).toEqual(['e', 'lek', 'tro', 'ni']);
     });
 
     test('syllabificator.getSyllables(): non-alphabet separated segments', () => {

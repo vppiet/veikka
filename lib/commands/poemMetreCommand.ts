@@ -1,5 +1,5 @@
-import Database from 'bun:sqlite';
 import {Logger} from 'winston';
+import Database, {Statement} from 'bun:sqlite';
 import {PrivMsgEvent} from '../../types/irc-framework';
 
 import {Command} from '../command';
@@ -17,8 +17,8 @@ class PoemMetreCommand extends Command implements Initialisable, Closeable {
     constructor(conn: Database) {
         super('.', 'runomitta', [
             '.runomitta <runo>',
-            'Tavuta runo ja kerro runon poljennoton mitta.' +
-                'Vinoviiva runossa erottaa säkeen toisistaan.',
+            'Tavuta runo ja kerro runon poljennoton mitta. ' +
+                'Vinoviiva ("/") runossa erottaa säkeen toisistaan.',
         ], 1);
         this.nounTable = new NounTable(conn);
         this.logger = getLogger('poemMetreCommand');
@@ -43,9 +43,9 @@ class PoemMetreCommand extends Command implements Initialisable, Closeable {
 
         // TODO: transaction function: somehow not finalized/garbage collected
         const insertCount = this.nounTable.insertMany(words);
-        words = undefined;
-
         this.logger.debug(`Inserted ${insertCount} nouns.`);
+
+        words = undefined;
     }
 
     close(client: Veikka) {
@@ -76,7 +76,7 @@ class PoemMetreCommand extends Command implements Initialisable, Closeable {
                     .map((word) => cmd.syllabificator.getSyllables(word));
             });
 
-        const metre: number[] = verses.map((v) => v.flat().length);
+        const metre = verses.map((v) => v.flat().length);
 
         const reply = cmd.createSay(
             verses.map((v) => v.map((w) => w.join('-')).join(' ')).join(' / '),
