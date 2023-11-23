@@ -1,5 +1,5 @@
 import {Veikka} from './lib/veikka';
-import {LogMiddleware} from './lib/plugins/logPlugin';
+import {LogMiddleware} from './lib/middlewares/logMiddleware';
 import {HelpCommand} from './lib/commands/helpCommand';
 import {QuitCommand} from './lib/commands/quitCommand';
 import {JoinCommand} from './lib/commands/joinCommand';

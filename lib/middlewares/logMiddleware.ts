@@ -24,7 +24,7 @@ class LogMiddleware implements IrcMiddleware {
                 return next();
             }
 
-            this.logger.info({command: command, event: event});
+            this.logger.debug({command: command, event: event});
             next();
         };
 
