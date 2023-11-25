@@ -6,6 +6,7 @@ const LEVEL = Bun.env['LOG_LEVEL'] ?? 'info';
 const console = new transports.Console();
 const file = new DailyRotateFile({
     filename: 'logs/application-%DATE%.log',
+    maxFiles: '14d',
 });
 
 const rootLogger = createLogger({
