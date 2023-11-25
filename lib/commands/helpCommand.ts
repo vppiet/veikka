@@ -1,7 +1,7 @@
 import {PrivMsgEvent} from 'irc-framework';
 
-import {Command, PRIVILEGE_LEVEL} from '../command';
-import {Context} from '../util';
+import {Command, PRIVILEGE_LEVEL, Params} from '../command';
+import {Veikka} from 'veikka';
 
 class HelpCommand extends Command {
     constructor() {
@@ -14,21 +14,14 @@ class HelpCommand extends Command {
         ], 0, 1);
     }
 
-    getEventName(): string {
-        return 'privmsg';
-    }
-
-    listener(this: Context<HelpCommand>, event: PrivMsgEvent): void {
-        if (!this.listener.match(event.message)) return;
-
+    eventHandler(event: PrivMsgEvent, params: Params, client: Veikka): void {
         // show only default-privileged commands
-        const cmds = this.client.commands.filter((c) => c.privilegeLevel === PRIVILEGE_LEVEL.USER);
+        const cmds = client.commands.filter((c) => c.privilegeLevel === PRIVILEGE_LEVEL.USER);
         const cmdsList = cmds.sort((a, b) => a.name.localeCompare(b.name));
         const cmdsStr = 'Komennot: ' + cmdsList.map((c) => c.getPrefixedName()).join(', ');
         const cmdNamesStr = 'Komentojen nimet: ' + cmdsList.map((c) => c.name).join(', ');
 
-        const {opt} = this.listener.parseParameters(event.message);
-        const name = opt[0];
+        const name = params.opt[0];
 
         if (name) {
             const filtered = cmds.filter((c) => {
@@ -39,10 +32,10 @@ class HelpCommand extends Command {
                 const found = filtered[0];
                 event.reply(found.getHelp());
             } else {
-                event.reply(this.listener.createSay('Komentoa ei löytynyt.', cmdNamesStr));
+                event.reply(this.createSay('Komentoa ei löytynyt.', cmdNamesStr));
             }
         } else {
-            event.reply(this.listener.getHelp(cmdsStr));
+            event.reply(this.getHelp(cmdsStr));
         }
     }
 }

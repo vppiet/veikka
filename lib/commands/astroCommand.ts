@@ -1,10 +1,10 @@
 import {PrivMsgEvent} from '../../types/irc-framework';
-import {format, formatISO, parse} from 'date-fns';
+import {format, parse} from 'date-fns';
 
-import {Context} from '../util';
-import {Command} from '../command';
+import {Command, Params} from '../command';
 import {ApiError, Astro, BASE_URL, LOCATION_NOT_FOUND_ERROR,
     MOON_PHASES_EN_FI} from './resources/weatherApi';
+import {Veikka} from 'veikka';
 
 const DATE_FORMAT = 'dd.MM.yyyy';
 const TIME_FORMAT_12H = 'hh:mm aa';
@@ -30,22 +30,12 @@ class AstroCommand extends Command {
         ], 1, 1);
     }
 
-    getEventName() {
-        return 'privmsg';
-    }
-
-    async listener(this: Context<AstroCommand>, event: PrivMsgEvent) {
-        const cmd = this.listener;
-
-        if (!cmd.match(event.message)) return;
-
-        const {req} = cmd.parseParameters(event.message);
-        if (!req[0]) {
-            event.reply(cmd.createSay('Anna paikkakunta.'));
+    async eventHandler(event: PrivMsgEvent, params: Params, client: Veikka) {
+        if (!params.req[0]) {
+            event.reply(this.createSay('Anna paikkakunta.'));
         }
 
-        const location = req[0];
-
+        const location = params.req[0];
         const url = `${BASE_URL}/astronomy.json?key=${Bun.env['WEATHER_API_KEY']}` +
             `&q=${encodeURIComponent(location)}`;
         const response = await fetch(url);
@@ -54,9 +44,9 @@ class AstroCommand extends Command {
             const body = await response.json<ApiError>();
 
             if (body.error.code === LOCATION_NOT_FOUND_ERROR) {
-                event.reply(cmd.createSay('Paikkakuntaa ei löydetty.'));
+                event.reply(this.createSay('Paikkakuntaa ei löydetty.'));
             } else {
-                event.reply(cmd.createSay('Jokin meni vikaan 8=D', `Koodi: ${body.error.code}`));
+                event.reply(this.createSay('Jokin meni vikaan 8=D', `Koodi: ${body.error.code}`));
             }
 
             return;
@@ -70,7 +60,7 @@ class AstroCommand extends Command {
         const moonrise = astro.moonrise === astro.moonset ? '-' : format12To24h(astro.moonrise);
         const moonset = astro.moonset === astro.moonrise ? '-' : format12To24h(astro.moonset);
 
-        event.reply(cmd.createSay(
+        event.reply(this.createSay(
             `${body.location.name}, ${body.location.country}`,
             `Aurinko: ${UP_ARROW}${sunrise} ${DOWN_ARROW}${sunset}`,
             `Kuu: ${MOON_PHASES_EN_FI[astro.moon_phase].toLowerCase()} ` +

@@ -1,7 +1,7 @@
 import {PrivMsgEvent} from 'irc-framework';
 
-import {Command, PRIVILEGE_LEVEL} from '../command';
-import {Context} from '../util';
+import {Command, PRIVILEGE_LEVEL, Params} from '../command';
+import {Veikka} from 'veikka';
 
 class JoinCommand extends Command {
     constructor() {
@@ -11,20 +11,15 @@ class JoinCommand extends Command {
         ], 1, 0, PRIVILEGE_LEVEL.ADMIN);
     }
 
-    getEventName(): string {
-        return 'privmsg';
-    }
-
-    listener(this: Context<JoinCommand>, event: PrivMsgEvent): void {
-        if (!this.listener.match(event.message, event.ident, event.hostname)) return;
-        const param = event.message.trim().split(' ')[1];
+    eventHandler(event: PrivMsgEvent, params: Params, client: Veikka): void {
+        const target = params.req[0];
 
         // already in the buffer
-        if (this.client.channels.findIndex((c) => c.name === param) !== -1) return;
+        if (client.channels.findIndex((c) => c.name === target) !== -1) return;
 
-        const channel = this.client.channel(param);
+        const channel = client.channel(target);
         channel.join();
-        this.client.channels.push(channel);
+        client.channels.push(channel);
     }
 }
 

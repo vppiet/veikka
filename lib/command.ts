@@ -1,6 +1,15 @@
-import {IrcEvent} from 'irc-framework';
-import {IrcEventListener} from 'listener';
-import {capitalize, isAdmin} from './util';
+import {Logger} from 'winston';
+import {PrivMsgEvent} from 'irc-framework';
+
+import {IrcEventListener} from './listener';
+import {Context, capitalize, isAdmin} from './util';
+import {getLogger} from './logger';
+import {Veikka} from './veikka';
+
+type Params = {
+    req: string[],
+    opt: string[],
+};
 
 const PRIVILEGE_LEVEL = {
     USER: 100,
@@ -17,6 +26,7 @@ abstract class Command implements IrcEventListener {
     readonly reqParams: number;
     readonly optParams: number;
     readonly privilegeLevel: typeof PRIVILEGE_LEVEL[keyof typeof PRIVILEGE_LEVEL];
+    readonly logger: Logger;
 
     constructor(prefix: string, name: string, help: string[], reqParams = 0, optParams = 0,
         privilegeLevel: typeof PRIVILEGE_LEVEL[keyof typeof PRIVILEGE_LEVEL] =
@@ -27,10 +37,25 @@ abstract class Command implements IrcEventListener {
         this.reqParams = reqParams;
         this.optParams = optParams;
         this.privilegeLevel = privilegeLevel;
+        this.logger = getLogger('Command-' + this.name);
     }
 
-    abstract getEventName(): string;
-    abstract listener(event: IrcEvent): void;
+    abstract eventHandler(event: PrivMsgEvent, params: Params, client: Veikka): void;
+
+    getEventName() {
+        return 'privmsg';
+    }
+
+    listener(this: Context<Command>, event: PrivMsgEvent) {
+        const cmd = this.listener;
+        if (!cmd.match(event.message, event.ident, event.hostname)) {
+            return;
+        }
+
+        const params = cmd.parseParameters(event.message);
+        cmd.logger.info(event);
+        cmd.eventHandler(event, params, this.client);
+    }
 
     getPrefixedName() {
         return this.prefix + this.name;
@@ -88,4 +113,4 @@ abstract class Command implements IrcEventListener {
     }
 }
 
-export {PRIVILEGE_LEVEL, PARAM_SEP, Command};
+export {Params, PRIVILEGE_LEVEL, PARAM_SEP, Command};

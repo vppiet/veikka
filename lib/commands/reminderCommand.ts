@@ -2,7 +2,7 @@ import {PrivMsgEvent} from 'irc-framework';
 import {milliseconds, parse, isValid, isPast, addMilliseconds, format,
     getUnixTime, fromUnixTime, differenceInMilliseconds} from 'date-fns';
 
-import {Command} from '../command';
+import {Command, Params} from '../command';
 import {Closeable, Context, INTERVAL, Initialisable} from '../util';
 import {Veikka} from '../veikka';
 import {ReminderRow, ReminderTable} from '../db/reminder';
@@ -75,15 +75,9 @@ class ReminderCommand extends Command implements Initialisable, Closeable {
         this.updater = setInterval(updateHandler, UPDATE_INTERVAL);
     }
 
-    getEventName(): string {
-        return 'privmsg';
-    }
-
-    listener(this: Context<ReminderCommand>, event: PrivMsgEvent): void {
-        if (!this.listener.match(event.message)) return;
-        const {req, opt} = this.listener.parseParameters(event.message);
-        const reminderTime = req[0];
-        const reminderMsg = opt[0];
+    eventHandler(event: PrivMsgEvent, params: Params, client: Veikka): void {
+        const reminderTime = params.req[0];
+        const reminderMsg = params.opt[0];
 
         const now = new Date();
 
@@ -98,7 +92,7 @@ class ReminderCommand extends Command implements Initialisable, Closeable {
                 minutes: duration.m,
                 seconds: duration.s,
             });
-            const row = this.listener.table.insertOne.get({
+            const row = this.table.insertOne.get({
                 $nick: event.nick,
                 $channel: event.target,
                 $created_at: getUnixTime(now),
@@ -107,9 +101,9 @@ class ReminderCommand extends Command implements Initialisable, Closeable {
             });
 
             if (row) {
-                this.listener.addTimer(this.client, row);
+                this.addTimer(client, row);
             } else {
-                event.reply(this.listener.createSay(
+                event.reply(this.createSay(
                     'Ääh, jokin meni vikaan.',
                     'Row insert returned null',
                 ));
@@ -122,7 +116,7 @@ class ReminderCommand extends Command implements Initialisable, Closeable {
         const instant = parse(reminderTime, FORMAT_DATETIME, now);
 
         if (!isValid(instant.getTime())) {
-            event.reply(this.listener.createSay(
+            event.reply(this.createSay(
                 'Muistutuksen aika on oltava joko muodossa "1v2kk3p4t5m6s" ' +
                 'tai "31.10.2023 15:56"',
             ));
@@ -131,12 +125,12 @@ class ReminderCommand extends Command implements Initialisable, Closeable {
         }
 
         if (isPast(instant)) {
-            event.reply(this.listener.createSay('Annettu aika on menneisyydessä'));
+            event.reply(this.createSay('Annettu aika on menneisyydessä'));
 
             return;
         }
 
-        const row = this.listener.table.insertOne.get({
+        const row = this.table.insertOne.get({
             $channel: event.target,
             $nick: event.nick,
             $created_at: getUnixTime(now),
@@ -145,9 +139,9 @@ class ReminderCommand extends Command implements Initialisable, Closeable {
         });
 
         if (row) {
-            this.listener.addTimer(this.client, row);
+            this.addTimer(client, row);
         } else {
-            event.reply(this.listener.createSay(
+            event.reply(this.createSay(
                 'Ääh, jokin meni vikaan.',
                 'Row insert returned null',
             ));

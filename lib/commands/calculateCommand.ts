@@ -1,18 +1,8 @@
 import {PrivMsgEvent} from 'irc-framework';
 
 import {SUPPORTED_CHARS, SYMBOLS, calculate} from './resources/calculation';
-import {Command} from '../command';
-import {Context} from '../util';
-
-function round(value: number, decPlaces = 2) {
-    // max supported decimal places
-    if (decPlaces > 10) decPlaces = 10;
-
-    // num->str->num->str->num, ehh... good for now
-    const str = String(value) + 'e' + decPlaces;
-    const num = Math.round(Number(str));
-    return Number(String(num) + 'e' + -decPlaces);
-}
+import {Command, Params} from '../command';
+import {round} from '../util';
 
 class CalculateCommand extends Command {
     constructor() {
@@ -24,23 +14,15 @@ class CalculateCommand extends Command {
         ], 1, 1);
     }
 
-    getEventName(): string {
-        return 'privmsg';
-    }
-
-    listener(this: Context<CalculateCommand>, event: PrivMsgEvent): void {
-        if (!this.listener.match(event.message)) return;
-
-        const {req, opt} = this.listener.parseParameters(event.message);
-
-        const input = req[0];
-        const {result, error} = calculate(input);
+    eventHandler(event: PrivMsgEvent, params: Params): void {
+        const expression = params.req[0];
+        const {result, error} = calculate(expression);
 
         if (result) {
-            const decimalPlaces = Number.isNaN(Number.parseInt(opt[0])) ? undefined :
-                Number.parseInt(opt[0]);
+            const decimalPlaces = Number.isNaN(Number.parseInt(params.opt[0])) ? undefined :
+                Number.parseInt(params.opt[0]);
             const rounded = round(result, decimalPlaces);
-            event.reply(`Laske | ${input} = ` +
+            event.reply(`Laske | ${expression} = ` +
                 `${String(result) === String(rounded) ? result : '~' + rounded}`);
         } else {
             event.reply('Laske | Nyt meni jotain vikaan. | ' +

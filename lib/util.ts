@@ -15,6 +15,8 @@ interface Closeable {
     close(client: Veikka): void;
 }
 
+type PropertyValue<T extends Record<PropertyKey, unknown>> = T[keyof T];
+
 function isType<T extends object, U extends object>(o: U, props: string[]): o is T & U {
     return props.every((p) => p in o);
 }
@@ -55,12 +57,21 @@ function peek<T>(arr: T[], i: number) {
     return arr[i+1];
 }
 
-type PropertyValue<T extends Record<PropertyKey, unknown>> = T[keyof T];
+function round(value: number, decPlaces = 2) {
+    // max supported decimal places
+    if (decPlaces > 10) decPlaces = 10;
+
+    // num->str->num->str->num, ehh... good for now
+    const str = String(value) + 'e' + decPlaces;
+    const num = Math.round(Number(str));
+    return Number(String(num) + 'e' + -decPlaces);
+}
 
 export {
     Context,
     Initialisable,
     Closeable,
+    PropertyValue,
     isType,
     INTERVAL,
     isEventType,
@@ -69,5 +80,5 @@ export {
     capitalize,
     finalizeAll,
     peek,
-    PropertyValue,
+    round,
 };

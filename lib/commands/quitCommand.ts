@@ -1,7 +1,7 @@
 import {PrivMsgEvent} from 'irc-framework';
 
-import {Command, PRIVILEGE_LEVEL} from '../command';
-import {Context} from '../util';
+import {Command, PRIVILEGE_LEVEL, Params} from '../command';
+import {Veikka} from 'veikka';
 
 class QuitCommand extends Command {
     constructor() {
@@ -11,18 +11,8 @@ class QuitCommand extends Command {
         ], 0, 1, PRIVILEGE_LEVEL.ADMIN);
     }
 
-    getEventName(): string {
-        return 'privmsg';
-    }
-
-    listener(this: Context<QuitCommand>, event: PrivMsgEvent): void {
-        const cmd = this.listener;
-        const client = this.client;
-
-        if (!cmd.match(event.message, event.ident, event.hostname)) return;
-
-        const {opt} = cmd.parseParameters(event.message);
-        const quitMsg = opt[0];
+    eventHandler(event: PrivMsgEvent, params: Params, client: Veikka) {
+        const quitMsg = params.opt[0];
 
         if (quitMsg) {
             client.quit(quitMsg);

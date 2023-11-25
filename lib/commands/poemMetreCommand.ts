@@ -1,10 +1,10 @@
 import {Logger} from 'winston';
-import Database, {Statement} from 'bun:sqlite';
+import Database from 'bun:sqlite';
 import {PrivMsgEvent} from '../../types/irc-framework';
 
-import {Command} from '../command';
+import {Command, Params} from '../command';
 import {NounTable} from '../db/noun';
-import {Closeable, Context, Initialisable} from '../util';
+import {Closeable, Initialisable} from '../util';
 import {Syllabificator} from './resources/textAnalysis';
 import {Veikka} from 'veikka';
 import {getLogger} from 'logger';
@@ -52,20 +52,11 @@ class PoemMetreCommand extends Command implements Initialisable, Closeable {
         this.nounTable.finalizeAll();
     }
 
-    getEventName() {
-        return 'privmsg';
-    }
-
-    listener(this: Context<PoemMetreCommand>, event: PrivMsgEvent) {
-        const cmd = this.listener;
-
-        if (!cmd.match(event.message)) return;
-
-        const {req} = cmd.parseParameters(event.message);
-        const poem = req[0];
+    eventHandler(event: PrivMsgEvent, params: Params) {
+        const poem = params.req[0];
 
         if (poem.length < 3) {
-            event.reply(cmd.createSay('Runossa on oltava vähintään kolme kirjainta.'));
+            event.reply(this.createSay('Runossa on oltava vähintään kolme kirjainta.'));
             return;
         }
 
@@ -73,12 +64,12 @@ class PoemMetreCommand extends Command implements Initialisable, Closeable {
             .map((verse) => {
                 return verse.trim()
                     .split(' ')
-                    .map((word) => cmd.syllabificator.getSyllables(word));
+                    .map((word) => this.syllabificator.getSyllables(word));
             });
 
         const metre = verses.map((v) => v.flat().length);
 
-        const reply = cmd.createSay(
+        const reply = this.createSay(
             verses.map((v) => v.map((w) => w.join('-')).join(' ')).join(' / '),
             metre.join('-'),
         );
