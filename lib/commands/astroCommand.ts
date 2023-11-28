@@ -6,7 +6,7 @@ import {ApiError, Astro, BASE_URL, LOCATION_NOT_FOUND_ERROR,
     MOON_PHASES_EN_FI} from './resources/weatherApi';
 import {Veikka} from 'veikka';
 
-const DATE_FORMAT = 'dd.MM.yyyy';
+const DATE_FORMAT = 'd.M.yyyy';
 const TIME_FORMAT_12H = 'hh:mm aa';
 const TIME_FORMAT_24H = 'HH:mm';
 const UP_ARROW = '\u2191';

@@ -20,6 +20,7 @@ mock.module('../../../db/noun.ts', () => {
                             {word: 'armahdus'},
                             {word: 'ero'},
                             {word: 'auto'},
+                            {word: 'osa'},
                         ];
                         return rows.filter((r) => r.word.startsWith(word));
                     }),
@@ -259,6 +260,10 @@ describe('textAnalysis', () => {
         expect(syllabificator.getSyllables('autoritäärinen'))
             .toEqual(['au', 'to', 'ri', 'tää', 'ri', 'nen']);
         expect(syllabificator.getSyllables('elektroni')).toEqual(['e', 'lek', 'tro', 'ni']);
+        expect(syllabificator.getSyllables('osaa')).toEqual(['o', 'saa']);
+        expect(syllabificator.getSyllables('osaava')).toEqual(['o', 'saa', 'va']);
+        expect(syllabificator.getSyllables('osaavainen')).toEqual(['o', 'saa', 'vai', 'nen']);
+        expect(syllabificator.getSyllables('osata')).toEqual(['o', 'sa', 'ta']);
     });
 
     test('syllabificator.getSyllables(): non-alphabet separated segments', () => {

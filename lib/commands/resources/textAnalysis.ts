@@ -96,7 +96,7 @@ const MATCHERS: {[k: string]: (view: string, before: string, after: string) => b
                     }
                 }
 
-                if (!after[1]) {
+                if (!after[1] && view[1] !== after[0]) {
                     if (before.length === 1) {
                         return true;
                     }
@@ -186,6 +186,10 @@ const MATCHERS: {[k: string]: (view: string, before: string, after: string) => b
         return false;
     },
     'CCV': (view, before, after) => { // foreign
+        if (after[0] && after[1] && isType(after[0] + after[1], 'CV')) {
+            return true;
+        }
+
         if (of(FOREIGN_CLUSTER, view[0] + view[1]) && after[0] &&
             of(FOREIGN_CONSONANTS, after[0])) {
             return true;
@@ -260,7 +264,10 @@ function segmentSplitter(this: Syllabificator, str: string) {
             const end = start + noun.length;
             const afterNoun = str.slice(end + 1);
 
-            if (noun && afterNoun.length >= 3 && !isType(afterNoun.slice(0, 2), 'CC') &&
+            if (noun && afterNoun.length >= 3 &&
+                !isType(afterNoun.slice(0, 2), 'CC') &&
+                noun[noun.length - 1] !== afterNoun[0] &&
+                !isType(noun[noun.length - 1] + afterNoun[0], 'VV') &&
                 !of(DIPHTHONGS, noun[noun.length - 1] + str[end + 1])) {
                 segments.push(str.slice(i - segment.length + 1, end + 1));
                 i = end;
@@ -272,6 +279,8 @@ function segmentSplitter(this: Syllabificator, str: string) {
     if (segment) {
         segments.push(segment);
     }
+
+    console.log(segments);
 
     return segments;
 }
