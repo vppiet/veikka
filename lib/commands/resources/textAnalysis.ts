@@ -280,8 +280,6 @@ function segmentSplitter(this: Syllabificator, str: string) {
         segments.push(segment);
     }
 
-    console.log(segments);
-
     return segments;
 }
 
