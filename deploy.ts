@@ -9,6 +9,7 @@ import {CalculateCommand} from './lib/commands/calculateCommand';
 import {PoemMetreCommand} from './lib/commands/poemMetreCommand';
 import {AstroCommand} from './lib/commands/astroCommand';
 import {DebugCommand} from './lib/commands/debugCommand';
+import {MessageCommand} from './lib/commands/messageCommand';
 
 const veikka = await Veikka.create();
 const db = veikka.db;
@@ -22,7 +23,8 @@ veikka.addCommand(new HelpCommand())
     .addCommand(new CalculateCommand())
     .addCommand(new PoemMetreCommand(db))
     .addCommand(new AstroCommand())
-    .addCommand(new DebugCommand());
+    .addCommand(new DebugCommand())
+    .addCommand(new MessageCommand());
 
 veikka.connect({
     nick: Bun.env['NICK'],

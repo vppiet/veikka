@@ -264,6 +264,9 @@ describe('textAnalysis', () => {
         expect(syllabificator.getSyllables('osaava')).toEqual(['o', 'saa', 'va']);
         expect(syllabificator.getSyllables('osaavainen')).toEqual(['o', 'saa', 'vai', 'nen']);
         expect(syllabificator.getSyllables('osata')).toEqual(['o', 'sa', 'ta']);
+        expect(syllabificator.getSyllables('kaljuileva')).toEqual(['kal', 'jui', 'le', 'va']);
+        expect(syllabificator.getSyllables('halkeamaisillaan'))
+            .toEqual(['hal', 'ke', 'a', 'mai', 'sil', 'laan']);
     });
 
     test('syllabificator.getSyllables(): non-alphabet separated segments', () => {

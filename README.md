@@ -2,5 +2,5 @@
 
 IRC-botti
 
-# Credits
-Finnish word list from ['fi-words' repo](https://github.com/akx/fi-words) by user [akx](https://github.com/akx/)
+# Kiitokset
+Suomen kielen sanat tarjoaa [*fi-words*](https://github.com/akx/fi-words) käyttäjältä [akx](https://github.com/akx/)
