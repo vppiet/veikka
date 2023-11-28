@@ -7,6 +7,7 @@ const SCHEMA =
     channel TEXT NOT NULL,
     created_at INTEGER NOT NULL,
     reminder_datetime INTEGER NOT NULL,
+    reminder_tz TEXT NOT NULL,
     reminder_text TEXT
 );`;
 
@@ -16,18 +17,17 @@ type ReminderRow = {
     channel: string;
     created_at: number;
     reminder_datetime: number;
+    reminder_tz: string;
     reminder_text?: string;
 };
 
+type InsertOneParams = {
+    [P in keyof Omit<ReminderRow, 'id'> as `$${P}`]: ReminderRow[P]
+};
+
 class ReminderTable {
-    getFutureToDate: Statement<ReminderRow, {$epoch: number}[]>;
-    insertOne: Statement<ReminderRow, {
-        $nick: string;
-        $channel: string;
-        $created_at: number;
-        $reminder_datetime: number;
-        $reminder_text?: string;
-    }[]>;
+    getFutureToDate: Statement<ReminderRow, {$max_epoch: number}[]>;
+    insertOne: Statement<ReminderRow, InsertOneParams[]>;
     deletePast: Statement<never, never[]>;
     deleteOne: Statement<never, {
         $id: number;
@@ -35,15 +35,20 @@ class ReminderTable {
 
     constructor(conn: Database) {
         conn.run(SCHEMA);
+
         this.getFutureToDate = conn.query(
-            'SELECT id, nick, channel, created_at, reminder_datetime, reminder_text ' +
+            'SELECT id, nick, channel, created_at, reminder_datetime, reminder_tz, ' +
+            'reminder_text ' +
             'FROM reminder ' +
-            'WHERE unixepoch(reminder_datetime) > unixepoch()',
+            'WHERE ' +
+            'reminder_datetime > unixepoch() AND ' +
+            'reminder_datetime < $max_epoch',
         );
         this.insertOne = conn.query(
             'INSERT INTO reminder(nick, channel, created_at, reminder_datetime, ' +
-            'reminder_text) ' +
-            'VALUES ($nick, $channel, $created_at, $reminder_datetime, $reminder_text) ' +
+            'reminder_tz, reminder_text) ' +
+            'VALUES ($nick, $channel, $created_at, $reminder_datetime, $reminder_tz, ' +
+            '$reminder_text) ' +
             'RETURNING *',
         );
         this.deletePast = conn.query(

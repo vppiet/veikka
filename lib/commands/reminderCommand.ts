@@ -1,15 +1,16 @@
 import {PrivMsgEvent} from 'irc-framework';
 import {milliseconds, parse, isValid, isPast, addMilliseconds, format,
     getUnixTime, fromUnixTime, differenceInMilliseconds} from 'date-fns';
+import {utcToZonedTime} from 'date-fns-tz';
 
 import {Command, Params} from '../command';
-import {Closeable, Context, INTERVAL, Initialisable} from '../util';
+import {Closeable, INTERVAL, Initialisable} from '../util';
 import {Veikka} from '../veikka';
 import {ReminderRow, ReminderTable} from '../db/reminder';
 import Database from 'bun:sqlite';
 
 const FORMAT_DATETIME = 'dd.LL.yyyy HH:mm';
-const UPDATE_INTERVAL = 30 * INTERVAL.MINUTE;
+const UPDATE_INTERVAL = 29 * INTERVAL.MINUTE;
 const MAX_TIMER_INTERVAL = INTERVAL.HOUR;
 
 class TimeDelta {
@@ -64,7 +65,9 @@ class ReminderCommand extends Command implements Initialisable, Closeable {
 
         const updateHandler = () => {
             const maxDate = addMilliseconds(new Date(), MAX_TIMER_INTERVAL);
-            const futureReminders = this.table.getFutureToDate.all({$epoch: getUnixTime(maxDate)});
+            const futureReminders = this.table.getFutureToDate.all({
+                $max_epoch: getUnixTime(maxDate),
+            });
 
             for (const reminder of futureReminders) {
                 this.addTimer(client, reminder);
@@ -97,6 +100,8 @@ class ReminderCommand extends Command implements Initialisable, Closeable {
                 $channel: event.target,
                 $created_at: getUnixTime(now),
                 $reminder_datetime: getUnixTime(addMilliseconds(now, durationMs)),
+                // eslint-disable-next-line new-cap
+                $reminder_tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
                 $reminder_text: reminderMsg,
             });
 
@@ -135,6 +140,8 @@ class ReminderCommand extends Command implements Initialisable, Closeable {
             $nick: event.nick,
             $created_at: getUnixTime(now),
             $reminder_datetime: getUnixTime(instant),
+            // eslint-disable-next-line new-cap
+            $reminder_tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
             $reminder_text: reminderMsg,
         });
 
@@ -153,14 +160,16 @@ class ReminderCommand extends Command implements Initialisable, Closeable {
             client.say(row.channel, `Muistutus | ` +
                 `${row.reminder_text || 'Ei viestiä'} | ` +
                 `${row.nick} | ` +
-                `${format(fromUnixTime(row.created_at), FORMAT_DATETIME)}`);
+                `Luotu ${format(utcToZonedTime(row.created_at * 1000,
+                    row.reminder_tz), FORMAT_DATETIME)}`,
+            );
 
             this.table.deleteOne.run({$id: row.id});
             this.removeTimer(row.id);
         };
 
-        const laterDate = fromUnixTime(row.reminder_datetime);
-        const earlierDate = fromUnixTime(row.created_at);
+        const laterDate = utcToZonedTime(row.reminder_datetime * 1000, row.reminder_tz);
+        const earlierDate = utcToZonedTime(row.created_at * 1000, row.reminder_tz);
         const timeout = differenceInMilliseconds(laterDate, earlierDate);
 
         this.timers.push({id: row.id, timer: setTimeout(handler, timeout)});
