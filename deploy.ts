@@ -10,6 +10,7 @@ import {PoemMetreCommand} from './lib/commands/poemMetreCommand';
 import {AstroCommand} from './lib/commands/astroCommand';
 import {DebugCommand} from './lib/commands/debugCommand';
 import {MessageCommand} from './lib/commands/messageCommand';
+import {INTERVAL} from './lib/util';
 
 const veikka = await Veikka.create();
 const db = veikka.db;
@@ -32,5 +33,6 @@ veikka.connect({
     gecos: Bun.env['GECOS'],
     host: Bun.env['SERVER_HOST'],
     port: Number(Bun.env['SERVER_PORT']) || 6667,
-    auto_reconnect_max_retries: 10,
+    auto_reconnect_max_retries: 30,
+    auto_reconnect_max_wait: 2 * INTERVAL.MINUTE,
 });

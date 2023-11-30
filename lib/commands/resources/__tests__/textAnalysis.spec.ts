@@ -21,7 +21,16 @@ mock.module('../../../db/noun.ts', () => {
                             {word: 'ero'},
                             {word: 'auto'},
                             {word: 'osa'},
+                            {word: 'riiuu'},
+                            {word: 'aie'},
+                            {word: 'Afrikka'},
+                            {word: 'korkea'},
+                            {word: 'elo'},
+                            {word: 'eloisa'},
+                            {word: 'työ'},
+                            {word: 'otto'},
                         ];
+
                         return rows.filter((r) => r.word.startsWith(word));
                     }),
                 },
@@ -267,6 +276,14 @@ describe('textAnalysis', () => {
         expect(syllabificator.getSyllables('kaljuileva')).toEqual(['kal', 'jui', 'le', 'va']);
         expect(syllabificator.getSyllables('halkeamaisillaan'))
             .toEqual(['hal', 'ke', 'a', 'mai', 'sil', 'laan']);
+        expect(syllabificator.getSyllables('sanoisin')).toEqual(['sa', 'noi', 'sin']);
+        expect(syllabificator.getSyllables('riiuu')).toEqual(['rii', 'uu']);
+        expect(syllabificator.getSyllables('riiuuaie')).toEqual(['rii', 'uu', 'ai', 'e']);
+        expect(syllabificator.getSyllables('riiata')).toEqual(['rii', 'a', 'ta']);
+        expect(syllabificator.getSyllables('Afrikka')).toEqual(['Af', 'rik', 'ka']);
+        expect(syllabificator.getSyllables('eloisahko')).toEqual(['e', 'loi', 'sah', 'ko']);
+        expect(syllabificator.getSyllables('työntekijä')).toEqual(['työn', 'te', 'ki', 'jä']);
+        expect(syllabificator.getSyllables('osanottoni')).toEqual(['o', 'san', 'ot', 'to', 'ni']);
     });
 
     test('syllabificator.getSyllables(): non-alphabet separated segments', () => {

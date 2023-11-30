@@ -1,4 +1,3 @@
-import {Logger} from 'winston';
 import Database from 'bun:sqlite';
 import {PrivMsgEvent} from '../../types/irc-framework';
 
@@ -7,11 +6,9 @@ import {NounTable} from '../db/noun';
 import {Closeable, Initialisable} from '../util';
 import {Syllabificator} from './resources/textAnalysis';
 import {Veikka} from 'veikka';
-import {getLogger} from 'logger';
 
 class PoemMetreCommand extends Command implements Initialisable, Closeable {
     nounTable: NounTable;
-    logger: Logger;
     syllabificator: Syllabificator;
 
     constructor(conn: Database) {
@@ -21,7 +18,6 @@ class PoemMetreCommand extends Command implements Initialisable, Closeable {
                 'Vinoviiva ("/") runossa erottaa säkeen toisistaan.',
         ], 1);
         this.nounTable = new NounTable(conn);
-        this.logger = getLogger('poemMetreCommand');
         this.syllabificator = new Syllabificator(this.nounTable);
     }
 
@@ -38,7 +34,10 @@ class PoemMetreCommand extends Command implements Initialisable, Closeable {
         const response = await fetch('https://raw.githubusercontent.com/akx/fi-words/master/words/nouns.txt');
         let text: string | undefined = await response.text();
 
-        let words: string[] | undefined = text.replaceAll('=', '').split('\n');
+        let words: string[] | undefined = text.replaceAll('=', '')
+            .split('\n')
+            // filter empty lines and some anomalies in word list
+            .filter((w) => w && !['san'].includes(w));
         text = undefined;
 
         // TODO: transaction function: somehow not finalized/garbage collected

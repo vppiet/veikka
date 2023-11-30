@@ -51,10 +51,6 @@ const MATCHERS: {[k: string]: (view: string, before: string, after: string) => b
                 if (after[1] && of(VOWELS, after[1])) {
                     return true;
                 }
-
-                if (after[1] && of(FOREIGN_CLUSTER, after[0] + after[1])) {
-                    return true;
-                }
             }
 
             if (of(VOWELS, after[0]) && view[0] !== after[0] &&
@@ -101,7 +97,7 @@ const MATCHERS: {[k: string]: (view: string, before: string, after: string) => b
                         return true;
                     }
 
-                    if (after[0] !== 'i' && view[1] !== after[0]) {
+                    if (after[0] !== 'i' && view[1] !== after[0] && after.length > 1) {
                         return true;
                     }
                 }
@@ -238,8 +234,14 @@ const MATCHERS: {[k: string]: (view: string, before: string, after: string) => b
 /** @this Syllabificator */
 function segmentSplitter(this: Syllabificator, str: string) {
     const segments: string[] = [];
-
     let segment = '';
+
+    const jumpWithNoun = (start: number, end: number) => {
+        segments.push(str.slice(start, end + 1));
+        segment = '';
+        return end;
+    };
+
     for (let i = 0; i < str.length; i++) {
         const char = str[i];
 
@@ -260,18 +262,39 @@ function segmentSplitter(this: Syllabificator, str: string) {
         // guess ahead if there's a noun
         if (segment.length >= 3) {
             const noun = this.getLongestNounByBegin(segment, after);
-            const start = i - segment.length;
-            const end = start + noun.length;
+            const start = i - segment.length + 1;
+            const end = noun ? start + noun.length - 1: i;
             const afterNoun = str.slice(end + 1);
 
-            if (noun && afterNoun.length >= 3 &&
-                !isType(afterNoun.slice(0, 2), 'CC') &&
-                noun[noun.length - 1] !== afterNoun[0] &&
-                !isType(noun[noun.length - 1] + afterNoun[0], 'VV') &&
-                !of(DIPHTHONGS, noun[noun.length - 1] + str[end + 1])) {
-                segments.push(str.slice(i - segment.length + 1, end + 1));
-                i = end;
-                segment = '';
+            // console.log({str, i, segment, noun, start, startChar: str[start],
+            //     end, endChar: str[end], afterNoun, segments});
+
+            if (noun && (end === str.length - 1 || afterNoun.length >= 3)) {
+                const tail = afterNoun.slice(0, 2);
+
+                if (isType(tail, 'CC') && of(FOREIGN_CLUSTER, tail)) {
+                    i = jumpWithNoun(start, end);
+                    continue;
+                }
+
+                // matching noun could be e.g. conjugated: do not break
+                if (isType(tail, 'CC') || of(DIPHTHONGS, noun[noun.length - 1] + afterNoun[0]) ||
+                    (isType(noun[noun.length - 1] + afterNoun[0], 'VV') &&
+                        noun[noun.length - 1] === afterNoun[0]
+                    )
+                ) {
+                    continue;
+                }
+
+                // osanottoni
+                if (afterNoun[0] === 'n' &&
+                    this.getLongestNounByBegin(str.slice(end + 2, end + 6), '')) {
+                    // compound word with first word in possessive form
+                    i = jumpWithNoun(start, end + 1);
+                    continue;
+                }
+
+                i = jumpWithNoun(start, end);
             }
         }
     }
@@ -279,6 +302,8 @@ function segmentSplitter(this: Syllabificator, str: string) {
     if (segment) {
         segments.push(segment);
     }
+
+    console.log(segments);
 
     return segments;
 }

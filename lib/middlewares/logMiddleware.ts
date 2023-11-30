@@ -5,26 +5,24 @@ import {getLogger} from '../logger';
 import {Veikka} from 'veikka';
 import {IrcMiddleware} from 'middleware';
 
+const ONLY_ON_DEBUG_LEVEL = ['ping', 'pong', 'privmsg', 'message', 'mode', 'userlist'];
+
 class LogMiddleware implements IrcMiddleware {
     private logger: Logger;
 
     constructor() {
-        this.logger = getLogger('logPlugin');
+        this.logger = getLogger('logMiddleware');
     }
 
     middleware() {
         const loggingHandler = (command: string, event: IrcEvent, client: Veikka,
             next: (err?: Error) => void) => {
-            if (command === 'pong' && Bun.env['LOG_IGNORE_PONG'] === 'true') {
-                return next();
+            if (ONLY_ON_DEBUG_LEVEL.includes(command)) {
+                this.logger.debug({command, event});
+            } else {
+                this.logger.info({command, event});
             }
 
-            // ignore 'message' event with 'privmsg' type as duplicate
-            if (command === 'message' && 'type' in event && event.type === 'privmsg') {
-                return next();
-            }
-
-            this.logger.debug({command: command, event: event});
             next();
         };
 
