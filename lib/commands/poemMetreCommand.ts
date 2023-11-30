@@ -37,7 +37,7 @@ class PoemMetreCommand extends Command implements Initialisable, Closeable {
         let words: string[] | undefined = text.replaceAll('=', '')
             .split('\n')
             // filter empty lines and some anomalies in word list
-            .filter((w) => w && !['san'].includes(w));
+            .filter((w) => w && !['san'].includes(w.toLowerCase()));
         text = undefined;
 
         // TODO: transaction function: somehow not finalized/garbage collected

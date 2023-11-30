@@ -1,3 +1,4 @@
+import {Logger} from 'winston';
 import {Database} from 'bun:sqlite';
 import {Channel, Client, IrcClientOptions} from 'irc-framework';
 
@@ -5,8 +6,10 @@ import {Command} from './command';
 import {Publisher} from './publisher';
 import {Initialisable, isType} from './util';
 import coreListeners from './coreListeners';
+import {getLogger} from 'logger';
 
 class Veikka extends Client {
+    logger: Logger;
     db: Database;
     commands: Command[] = [];
     channels: Channel[] = [];
@@ -14,6 +17,7 @@ class Veikka extends Client {
 
     private constructor(db: Database, options?: IrcClientOptions) {
         super(options);
+        this.logger = getLogger('Veikka');
         this.db = db;
         this.addCoreListeners();
     }
