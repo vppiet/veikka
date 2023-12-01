@@ -4,7 +4,7 @@ const SCHEMA =
 `CREATE TABLE IF NOT EXISTS reminder(
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     nick TEXT NOT NULL,
-    channel TEXT NOT NULL,
+    target TEXT NOT NULL,
     created_at INTEGER NOT NULL,
     reminder_datetime INTEGER NOT NULL,
     reminder_tz TEXT NOT NULL,
@@ -14,7 +14,7 @@ const SCHEMA =
 type ReminderRow = {
     id: number;
     nick: string;
-    channel: string;
+    target: string;
     created_at: number;
     reminder_datetime: number;
     reminder_tz: string;
@@ -37,7 +37,7 @@ class ReminderTable {
         conn.run(SCHEMA);
 
         this.getFutureToDate = conn.query(
-            'SELECT id, nick, channel, created_at, reminder_datetime, reminder_tz, ' +
+            'SELECT id, nick, target, created_at, reminder_datetime, reminder_tz, ' +
             'reminder_text ' +
             'FROM reminder ' +
             'WHERE ' +
@@ -45,9 +45,9 @@ class ReminderTable {
             'reminder_datetime < $max_epoch',
         );
         this.insertOne = conn.query(
-            'INSERT INTO reminder(nick, channel, created_at, reminder_datetime, ' +
+            'INSERT INTO reminder(nick, target, created_at, reminder_datetime, ' +
             'reminder_tz, reminder_text) ' +
-            'VALUES ($nick, $channel, $created_at, $reminder_datetime, $reminder_tz, ' +
+            'VALUES ($nick, $target, $created_at, $reminder_datetime, $reminder_tz, ' +
             '$reminder_text) ' +
             'RETURNING *',
         );

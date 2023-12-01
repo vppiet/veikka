@@ -5,7 +5,7 @@ import {Command, Params} from '../command';
 import {NounTable} from '../db/noun';
 import {Closeable, Initialisable} from '../util';
 import {Syllabificator} from './resources/textAnalysis';
-import {Veikka} from 'veikka';
+import {Veikka} from '../veikka';
 
 class PoemMetreCommand extends Command implements Initialisable, Closeable {
     nounTable: NounTable;
@@ -22,29 +22,7 @@ class PoemMetreCommand extends Command implements Initialisable, Closeable {
     }
 
     async initialise(client: Veikka) {
-        const count = this.nounTable.getCount.get()?.count;
-        this.logger.debug(`${count} nouns in the database.`);
-
-        if (count && count > 0) {
-            // words in table - let's keep them
-            return;
-        }
-
-        // eslint-disable-next-line max-len
-        const response = await fetch('https://raw.githubusercontent.com/akx/fi-words/master/words/nouns.txt');
-        let text: string | undefined = await response.text();
-
-        let words: string[] | undefined = text.replaceAll('=', '')
-            .split('\n')
-            // filter empty lines and some anomalies in word list
-            .filter((w) => w && !['san'].includes(w.toLowerCase()));
-        text = undefined;
-
-        // TODO: transaction function: somehow not finalized/garbage collected
-        const insertCount = this.nounTable.insertMany(words);
-        this.logger.debug(`Inserted ${insertCount} nouns.`);
-
-        words = undefined;
+        await this.nounTable.loadWords();
     }
 
     close(client: Veikka) {

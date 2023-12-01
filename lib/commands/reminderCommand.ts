@@ -1,6 +1,6 @@
 import {PrivMsgEvent} from 'irc-framework';
 import {milliseconds, parse, isValid, isPast, addMilliseconds, format,
-    getUnixTime, fromUnixTime, differenceInMilliseconds} from 'date-fns';
+    getUnixTime, differenceInMilliseconds} from 'date-fns';
 import {utcToZonedTime} from 'date-fns-tz';
 
 import {Command, Params} from '../command';
@@ -97,7 +97,7 @@ class ReminderCommand extends Command implements Initialisable, Closeable {
             });
             const row = this.table.insertOne.get({
                 $nick: event.nick,
-                $channel: event.target,
+                $target: event.target === client.user.nick ? event.nick : event.target,
                 $created_at: getUnixTime(now),
                 $reminder_datetime: getUnixTime(addMilliseconds(now, durationMs)),
                 // eslint-disable-next-line new-cap
@@ -136,8 +136,8 @@ class ReminderCommand extends Command implements Initialisable, Closeable {
         }
 
         const row = this.table.insertOne.get({
-            $channel: event.target,
             $nick: event.nick,
+            $target: event.target === client.user.nick ? event.nick : event.target,
             $created_at: getUnixTime(now),
             $reminder_datetime: getUnixTime(instant),
             // eslint-disable-next-line new-cap
@@ -157,7 +157,7 @@ class ReminderCommand extends Command implements Initialisable, Closeable {
 
     addTimer(client: Veikka, row: ReminderRow) {
         const handler = () => {
-            client.say(row.channel, `Muistutus | ` +
+            client.say(row.target, `Muistutus | ` +
                 `${row.reminder_text || 'Ei viestiä'} | ` +
                 `${row.nick} | ` +
                 `Luotu ${format(utcToZonedTime(row.created_at * 1000,

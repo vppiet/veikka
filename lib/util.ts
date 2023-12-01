@@ -1,5 +1,8 @@
 import {Statement} from 'bun:sqlite';
 import {IrcEvent, MiddlewareHandler} from 'irc-framework';
+import {resolve} from 'path';
+import {mkdir} from 'fs/promises';
+
 import {Veikka} from './veikka';
 
 type Context<L> = {
@@ -17,14 +20,14 @@ interface Closeable {
 
 type PropertyValue<T extends Record<PropertyKey, unknown>> = T[keyof T];
 
-function isType<T extends object, U extends object>(o: U, props: string[]): o is T & U {
-    return props.every((p) => p in o);
-}
-
 const INTERVAL = {
     MINUTE: 1000 * 60,
     HOUR: 1000 * 60 * 60,
 } as const;
+
+function isType<T extends object, U extends object>(o: U, props: string[]): o is T & U {
+    return props.every((p) => p in o);
+}
 
 function isEventType<T extends IrcEvent>(actualCmd: string, expectedCmd: string,
     event: IrcEvent): event is T {
@@ -67,13 +70,31 @@ function round(value: number, decPlaces = 2) {
     return Number(String(num) + 'e' + -decPlaces);
 }
 
+async function getCacheDir() {
+    const path = resolve(process.cwd(), 'cache/');
+
+    try {
+        await mkdir(path);
+    } catch (err) {
+        if (err instanceof Error) {
+            if (err.name === 'EEXIST') {
+                return path;
+            }
+        }
+
+        throw err;
+    }
+
+    return path;
+}
+
 export {
     Context,
     Initialisable,
     Closeable,
     PropertyValue,
-    isType,
     INTERVAL,
+    isType,
     isEventType,
     useParsedEvents,
     isAdmin,
@@ -81,4 +102,5 @@ export {
     finalizeAll,
     peek,
     round,
+    getCacheDir,
 };
