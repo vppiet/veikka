@@ -1,7 +1,8 @@
 import {PrivMsgEvent} from 'irc-framework';
 import {milliseconds, parse, isValid, isPast, addMilliseconds, format,
-    getUnixTime, differenceInMilliseconds} from 'date-fns';
+    getUnixTime, differenceInMilliseconds, formatDistance} from 'date-fns';
 import {utcToZonedTime} from 'date-fns-tz';
+import {fi} from 'date-fns/locale';
 
 import {Command, Params} from '../command';
 import {Closeable, INTERVAL, Initialisable} from '../util';
@@ -9,7 +10,7 @@ import {Veikka} from '../veikka';
 import {ReminderRow, ReminderTable} from '../db/reminder';
 import Database from 'bun:sqlite';
 
-const FORMAT_DATETIME = 'dd.LL.yyyy HH:mm';
+const FORMAT_DATETIME = 'd.M.yyyy \'klo\' HH:mm';
 const UPDATE_INTERVAL = 29 * INTERVAL.MINUTE;
 const MAX_TIMER_INTERVAL = INTERVAL.HOUR;
 
@@ -45,6 +46,11 @@ function parseDuration(str: string) {
     return td;
 }
 
+function formatForReply(reminderDate: Date, baseDate: Date) {
+    return format(reminderDate, FORMAT_DATETIME) +
+        ` (${formatDistance(reminderDate, baseDate, {addSuffix: true, locale: fi})})`;
+}
+
 class ReminderCommand extends Command implements Initialisable, Closeable {
     timers: ReminderTimer[] = [];
     table: ReminderTable;
@@ -53,8 +59,8 @@ class ReminderCommand extends Command implements Initialisable, Closeable {
     constructor(conn: Database) {
         super('.', 'muistutus', [
             '.muistutus <aika>, [viesti]',
-            'Aseta muistutus.',
-            'Aika-argumentti voi olla joko ajankohta ("11.11.2023 19:41") ' +
+            'Aseta itsellesi muistutus.',
+            'Aika-argumentti voi olla joko ajankohta ("31.10.2023 klo 15:56") ' +
                 'tai viive ("1v2kk3p4t5m6s")',
         ], 1, 1);
         this.table = new ReminderTable(conn);
@@ -95,11 +101,12 @@ class ReminderCommand extends Command implements Initialisable, Closeable {
                 minutes: duration.m,
                 seconds: duration.s,
             });
+            const reminderDateTime = addMilliseconds(now, durationMs);
             const row = this.table.insertOne.get({
                 $nick: event.nick,
                 $target: event.target === client.user.nick ? event.nick : event.target,
                 $created_at: getUnixTime(now),
-                $reminder_datetime: getUnixTime(addMilliseconds(now, durationMs)),
+                $reminder_datetime: getUnixTime(reminderDateTime),
                 // eslint-disable-next-line new-cap
                 $reminder_tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
                 $reminder_text: reminderMsg,
@@ -107,6 +114,9 @@ class ReminderCommand extends Command implements Initialisable, Closeable {
 
             if (row) {
                 this.addTimer(client, row);
+                event.reply(this.createSay(
+                    `Muistutus asetettu ajankohtaan ${formatForReply(reminderDateTime, now)}`,
+                ));
             } else {
                 event.reply(this.createSay(
                     'Ääh, jokin meni vikaan.',
@@ -123,14 +133,14 @@ class ReminderCommand extends Command implements Initialisable, Closeable {
         if (!isValid(instant.getTime())) {
             event.reply(this.createSay(
                 'Muistutuksen aika on oltava joko muodossa "1v2kk3p4t5m6s" ' +
-                'tai "31.10.2023 15:56"',
+                'tai "31.10.2023 klo 15:56"',
             ));
 
             return;
         }
 
         if (isPast(instant)) {
-            event.reply(this.createSay('Annettu aika on menneisyydessä'));
+            event.reply(this.createSay('Ajankohta on menneisyydessä'));
 
             return;
         }
@@ -147,6 +157,9 @@ class ReminderCommand extends Command implements Initialisable, Closeable {
 
         if (row) {
             this.addTimer(client, row);
+            event.reply(this.createSay(
+                `Muistutus asetettu ajankohtaan ${formatForReply(instant, now)}`,
+            ));
         } else {
             event.reply(this.createSay(
                 'Ääh, jokin meni vikaan.',
@@ -157,12 +170,12 @@ class ReminderCommand extends Command implements Initialisable, Closeable {
 
     addTimer(client: Veikka, row: ReminderRow) {
         const handler = () => {
-            client.say(row.target, `Muistutus | ` +
-                `${row.reminder_text || 'Ei viestiä'} | ` +
-                `${row.nick} | ` +
-                `Luotu ${format(utcToZonedTime(row.created_at * 1000,
+            const msg = row.reminder_text ? `"${row.reminder_text}"` : 'Ei viestiä';
+            client.say(row.target, this.createSay(
+                msg,
+                `Luonut ${row.nick} ajankohdassa ${format(utcToZonedTime(row.created_at * 1000,
                     row.reminder_tz), FORMAT_DATETIME)}`,
-            );
+            ));
 
             this.table.deleteOne.run({$id: row.id});
             this.removeTimer(row.id);
