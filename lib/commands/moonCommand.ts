@@ -11,10 +11,10 @@ class MoonCommand extends Command {
     constructor() {
         super('.', 'kuu', [
             '.kuu [pvämäärä]',
-            'Näytä tämän hetkinen tai tietyn ajankohdan (muodossa pp.kk.vvvv klo tt:ss)' +
+            'Näytä tämän hetkinen tai tietyn ajankohdan (muodossa pp.kk.vvvv klo tt:ss) ' +
                 'kuun valaistumisaste.',
             'Esim: ".kuu"',
-            'Esim. ".kuu 2.12.2023 klo 21:13',
+            'Esim. ".kuu 2.12.2023 klo 21:13"',
         ], 0, 1);
     }
 
