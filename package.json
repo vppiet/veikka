@@ -20,12 +20,14 @@
     "date-fns": "^2.30.0",
     "date-fns-tz": "^2.0.0",
     "irc-framework": "^4.13.1",
+    "lodash.round": "^4.0.4",
     "rss-parser": "^3.13.0",
     "winston": "^3.8.2",
     "winston-daily-rotate-file": "^4.7.1"
   },
   "devDependencies": {
     "@definitelytyped/dtslint": "^0.0.151",
+    "@types/lodash.round": "^4.0.9",
     "@typescript-eslint/eslint-plugin": "^5.53.0",
     "@typescript-eslint/parser": "^5.53.0",
     "bun-types": "latest",

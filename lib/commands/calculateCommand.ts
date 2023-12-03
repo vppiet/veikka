@@ -1,8 +1,8 @@
 import {PrivMsgEvent} from 'irc-framework';
+import {round} from 'lodash';
 
 import {SUPPORTED_CHARS, SYMBOLS, calculate} from './resources/calculation';
 import {Command, Params} from '../command';
-import {round} from '../util';
 
 class CalculateCommand extends Command {
     constructor() {

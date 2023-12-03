@@ -1,4 +1,4 @@
-import {round} from '../../util';
+import {round} from 'lodash';
 
 type ApiError = {
     error: {
@@ -99,28 +99,30 @@ class CoordinatePoint {
             throw new TypeError(`Required value was ${value}`);
         }
 
-        if (Math.abs(value) > 180) {
-            throw new TypeError(`Value was ${value} and exceeds possible -/+180 degrees`);
-        }
-
         if (!type) {
             throw new TypeError(`Required type was ${type}`);
         }
 
+        const absValue = Math.abs(value);
+
+        if (absValue > 180) {
+            throw new TypeError(`Value was ${value} and exceeds possible -/+180 degrees`);
+        }
+
         const positive = value >= 0;
 
-        const degrees = Math.trunc(Math.abs(value));
-        const minutes = Math.trunc(Math.abs(value) % 1 * 60);
-        const seconds = (Math.abs(value) % 1 * 60) % 1 * 60;
+        const degrees = Math.trunc(absValue);
+        const minutes = Math.trunc(absValue % 1 * 60);
+        const seconds = round((absValue % 1 * 60) % 1 * 60, 3);
 
-        return new CoordinatePoint(value, type, positive, degrees, minutes, seconds);
+        return new CoordinatePoint(absValue, type, positive, degrees, minutes, seconds);
     }
 
     getISO() {
         // https://en.wikipedia.org/wiki/ISO_6709#Representation_at_the_human_interface_(Annex_D)
-        const d = this.degrees + '\u00B0';
-        const m = this.minutes || this.seconds ? pad(this.minutes) + '\'' : '';
-        const s = this.seconds ? pad(round(this.seconds, 3)) + '"' : '';
+        const d = this.degrees + '°';
+        const m = pad(this.minutes) + '′';
+        const s = pad(round(this.seconds, 3)) + '″';
         const direction = this.type === CoordinateType.Lat ?
             (this.positive ? 'N' : 'S') :
             (this.positive ? 'E' : 'W');

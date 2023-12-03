@@ -60,16 +60,6 @@ function peek<T>(arr: T[], i: number) {
     return arr[i+1];
 }
 
-function round(value: number, decPlaces = 2) {
-    // max supported decimal places
-    if (decPlaces > 10) decPlaces = 10;
-
-    // num->str->num->str->num, ehh... good for now
-    const str = String(value) + 'e' + decPlaces;
-    const num = Math.round(Number(str));
-    return Number(String(num) + 'e' + -decPlaces);
-}
-
 async function getCacheDir() {
     const path = resolve(process.cwd(), 'cache/');
 
@@ -101,6 +91,5 @@ export {
     capitalize,
     finalizeAll,
     peek,
-    round,
     getCacheDir,
 };

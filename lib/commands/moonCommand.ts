@@ -1,9 +1,10 @@
 import {format, parse} from 'date-fns';
 import {PrivMsgEvent} from '../../types/irc-framework';
+import {round} from 'lodash';
+
 import {Veikka} from 'veikka';
 import {Command, Params} from '../command';
 import {getMoonIllumination} from './resources/moon';
-import {round} from '../util';
 
 const DATETIME_FORMAT = 'd.M.yyyy \'klo\' HH:mm';
 
