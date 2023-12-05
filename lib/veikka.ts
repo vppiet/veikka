@@ -59,6 +59,10 @@ class Veikka extends Client {
             const l = new CoreListener();
             this.addListener(l.getEventName(), l.listener, {client: this, listener: l});
         }
+
+        this.addListener('debug', (msg: string) => {
+            this.logger.debug(msg);
+        });
     }
 }
 

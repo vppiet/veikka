@@ -27,7 +27,7 @@ class SocketCloseListener implements IrcEventListener {
         this.client.logger.info(`Socket closed`);
         this.client.publishers.forEach((p) => p.stopTimer());
         this.client.commands
-            .filter((c): c is Command & Closeable => isType<Closeable, Command>(c, ['close']))
+            .filter((c): c is Command & Closeable => isType(c, ['close']))
             .forEach((c) => c.close(this.client));
     }
 }
