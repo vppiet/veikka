@@ -61,6 +61,7 @@ class Veikka extends Client {
         }
 
         this.addListener('debug', (msg: string) => {
+            // implement listener interface as wider abstraction and include this in it in future
             this.logger.debug(msg);
         });
     }
