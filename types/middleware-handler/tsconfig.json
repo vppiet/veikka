@@ -16,6 +16,5 @@
     },
     "files": [
         "index.d.ts",
-        "middleware-handler-tests.ts"
     ]
 }

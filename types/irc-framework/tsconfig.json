@@ -17,6 +17,5 @@
     },
     "files": [
         "index.d.ts",
-        "irc-framework-tests.ts"
     ]
 }
