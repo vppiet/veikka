@@ -1,7 +1,7 @@
-import {IrcEventListener} from 'listener';
+import {EventListener} from 'listener';
 import {Veikka} from 'veikka';
 
-interface Publisher extends IrcEventListener {
+interface Publisher extends EventListener {
     subscriptions: string[];
     timer?: Timer;
     addSubscription(channel: string): this;

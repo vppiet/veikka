@@ -1,7 +1,7 @@
 import {Logger} from 'winston';
 import {PrivMsgEvent} from 'irc-framework';
 
-import {IrcEventListener} from './listener';
+import {EventListener} from './listener';
 import {Context, capitalize, isAdmin} from './util';
 import {getLogger} from './logger';
 import {Veikka} from './veikka';
@@ -19,7 +19,8 @@ const PRIVILEGE_LEVEL = {
 
 const PARAM_SEP = ', ';
 
-abstract class Command implements IrcEventListener {
+abstract class Command implements EventListener {
+    readonly eventName = 'privmsg';
     readonly prefix: string;
     readonly name: string;
     readonly help: string[];
@@ -41,10 +42,6 @@ abstract class Command implements IrcEventListener {
     }
 
     abstract eventHandler(event: PrivMsgEvent, params: Params, client: Veikka): void;
-
-    getEventName() {
-        return 'privmsg';
-    }
 
     listener(this: Context<Command>, event: PrivMsgEvent) {
         const cmd = this.listener;

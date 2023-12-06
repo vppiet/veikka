@@ -1,8 +1,6 @@
-import {IrcEvent} from 'irc-framework';
-
-type IrcEventListener = {
-    getEventName(): string;
-    listener(event: IrcEvent): void;
+type EventListener = {
+    eventName: string;
+    listener(...args: unknown[]): void;
 };
 
-export {IrcEventListener};
+export {EventListener};

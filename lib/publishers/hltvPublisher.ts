@@ -6,6 +6,7 @@ import {Context, INTERVAL} from '../util';
 import {Veikka} from 'veikka';
 
 class HltvPublisher implements Publisher {
+    eventName = 'join';
     subscriptions: string[] = [];
     timer?: Timer;
 
@@ -18,17 +19,13 @@ class HltvPublisher implements Publisher {
         return this;
     }
 
-    getEventName() {
-        return 'join';
-    }
-
     listener(this: Context<HltvPublisher>, event: JoinEvent) {
         if (event.nick !== this.client.user.nick ||
             !this.listener.subscriptions.includes(event.channel)) return;
 
         // start working when first subscribed channel is joined
         this.listener.startTimer(this.client);
-        this.client.removeListener(this.listener.getEventName(), this.listener.listener);
+        this.client.removeListener(this.listener.eventName, this.listener.listener);
     }
 
     async startTimer(client: Veikka) {

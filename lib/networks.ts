@@ -21,27 +21,31 @@ class QuakenetHandler implements NetworkHandler {
     }
 
     noticeListener(this: Context<QuakenetHandler>, event: NoticeEvent) {
+        const {client, listener} = this;
+
         if (event.ident === 'TheQBot' && event.hostname === 'CServe.quakenet.org') {
             if (event.message.startsWith('You are now logged in as ')) {
-                this.client.once('displayed host', this.listener.displayedHostListener, this);
-                this.client.mode(this.client.user.nick, '+x');
-                this.client.removeListener('notice', this.listener.noticeListener);
+                client.once('displayed host', listener.displayedHostListener, {client, listener});
+                client.mode(client.user.nick, '+x');
+                client.removeListener('notice', listener.noticeListener);
             } else {
-                this.client.emit('network services');
-                this.client.removeListener('notice', this.listener.noticeListener);
+                client.emit('network services');
+                client.removeListener('notice', listener.noticeListener);
             }
         }
     }
 
     displayedHostListener(this: Context<QuakenetHandler>, event: DisplayedHostEvent) {
-        this.client.removeListener('displayed host', this.listener.displayedHostListener);
-        this.client.emit('network services');
+        const {client, listener} = this;
+
+        client.removeListener('displayed host', listener.displayedHostListener);
+        client.emit('network services');
     }
 }
 
-const NETWORKS: Record<string, NetworkHandler> = {
+const networks: Record<string, NetworkHandler> = {
     'quakenet.org': new QuakenetHandler(),
 };
 
 export {NetworkHandler, QuakenetHandler};
-export default NETWORKS;
+export default networks;

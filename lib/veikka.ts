@@ -1,12 +1,12 @@
 import {Logger} from 'winston';
 import {Database} from 'bun:sqlite';
-import {Channel, Client, IrcClientOptions} from 'irc-framework';
+import {Channel, Client, IrcClientOptions, JoinEvent, RegisteredEvent} from 'irc-framework';
 
 import {Command} from './command';
 import {Publisher} from './publisher';
-import {Initialisable, isType} from './util';
-import coreListeners from './coreListeners';
+import {Closeable, Initialisable, isType} from './util';
 import {getLogger} from 'logger';
+import networks from 'networks';
 
 class Veikka extends Client {
     logger: Logger;
@@ -34,7 +34,7 @@ class Veikka extends Client {
 
     addCommand(...cmds: Command[]) {
         cmds.forEach((c) => {
-            this.addListener(c.getEventName(), c.listener, {client: this, listener: c});
+            this.addListener(c.eventName, c.listener, {client: this, listener: c});
 
             if (isType<Initialisable, Command>(c, ['initialise'])) {
                 c.initialise(this);
@@ -47,7 +47,7 @@ class Veikka extends Client {
     }
 
     addPublisher(publisher: Publisher) {
-        this.addListener(publisher.getEventName(), publisher.listener,
+        this.addListener(publisher.eventName, publisher.listener,
             {client: this, listener: publisher});
         this.publishers.push(publisher);
 
@@ -55,14 +55,43 @@ class Veikka extends Client {
     }
 
     private addCoreListeners() {
-        for (const CoreListener of coreListeners) {
-            const l = new CoreListener();
-            this.addListener(l.getEventName(), l.listener, {client: this, listener: l});
-        }
+        this.on('registered', (event: RegisteredEvent) => {
+            this.on('network services', networkServicesListener);
+            this.logger.info(`Registered as ${event.nick}`);
 
-        this.addListener('debug', (msg: string) => {
-            // implement listener interface as wider abstraction and include this in it in future
+            const domain = this.options.host?.split('.').slice(-2).join('.');
+
+            if (domain && networks[domain]) {
+                networks[domain].handler(this);
+            } else {
+                this.emit('network services');
+            }
+        });
+
+        const networkServicesListener = () => {
+            Bun.env['SERVER_AUTOJOIN']?.split(', ').forEach((c) => this.join(c));
+            this.removeListener('network services', networkServicesListener);
+        };
+
+        this.on('debug', (msg: string) => {
             this.logger.debug(msg);
+        });
+
+        this.on('join', (event: JoinEvent) => {
+            if (event.nick == this.user.nick) {
+                this.channels.push(this.channel(event.channel));
+
+                this.logger.info(`Joined channel ${event.channel}`);
+            }
+        });
+
+        this.on('socket close', () => {
+            this.logger.info(`Socket closed`);
+            this.publishers.forEach((p) => p.stopTimer());
+            this.channels = [];
+            this.commands
+                .filter((c): c is Command & Closeable => isType(c, ['close']))
+                .forEach((c) => c.close(this));
         });
     }
 }
