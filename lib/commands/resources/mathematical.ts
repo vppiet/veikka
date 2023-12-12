@@ -40,7 +40,7 @@ const NUMBER_CHARS = '0123456789.';
 const SUPPORTED_CHARS = NUMBER_CHARS + Object.keys(OPERATORS).join('');
 
 // Implementation based on pseudo code in https://en.wikipedia.org/wiki/Shunting_yard_algorithm
-function lexer(input: string): {tokens: (number | string)[], error?: string} {
+function lexer(input: string) {
     const outputQue: (number | string)[] = [];
     const opStack: string[] = [];
 
@@ -76,10 +76,7 @@ function lexer(input: string): {tokens: (number | string)[], error?: string} {
         }
 
         if (!handleBuffer()) {
-            return {
-                tokens: outputQue,
-                error: 'Parse error: unsupported token or invalid syntax',
-            };
+            return {error: 'Parse error: unsupported token or invalid syntax'};
         }
 
         if (char in OPERATORS) {
@@ -100,7 +97,6 @@ function lexer(input: string): {tokens: (number | string)[], error?: string} {
             while (opStack[0] !== '(') {
                 if (opStack.length === 0) {
                     return {
-                        tokens: outputQue,
                         error: 'Parse error: operation stack is empty while consuming right ' +
                             'parenthesis',
                     };
@@ -114,7 +110,6 @@ function lexer(input: string): {tokens: (number | string)[], error?: string} {
             continue;
         } else {
             return {
-                tokens: outputQue,
                 error: 'Parse error: supported tokens were exhausted',
             };
         }
@@ -126,18 +121,17 @@ function lexer(input: string): {tokens: (number | string)[], error?: string} {
 
     outputQue.push(...opStack);
 
-    return {
-        tokens: outputQue,
-    };
+    return {tokens: outputQue};
 }
 
-function calculate(input: string): {result?: number, error?: string} {
-    const {tokens, error} = lexer(input);
+function calculate(input: string) {
+    const result = lexer(input);
 
-    if (error) {
-        return {error};
+    if ('error' in result) {
+        return {error: result.error};
     }
 
+    const tokens = result.tokens;
     const buffer: number[] = [];
 
     for (let i = 0; i < tokens.length; i++) {
@@ -147,9 +141,7 @@ function calculate(input: string): {result?: number, error?: string} {
             const b = buffer.pop();
             const a = buffer.pop();
             if (!b || !a) {
-                return {
-                    error: 'Tokenisation error: token amount mismatch',
-                };
+                return {error: 'Tokenisation error: token amount mismatch'};
             }
 
             const fn = OPERATORS[t].fn;

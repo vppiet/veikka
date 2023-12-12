@@ -11,7 +11,7 @@ import networks from 'networks';
 class Veikka extends Client {
     logger: Logger;
     db: Database;
-    commands: Command[] = [];
+    commands: Command<unknown>[] = [];
     channels: Channel[] = [];
     publishers: Publisher[] = [];
 
@@ -32,11 +32,11 @@ class Veikka extends Client {
         return new Veikka(db, options);
     }
 
-    addCommand(...cmds: Command[]) {
+    addCommand<T>(...cmds: Command<T>[]) {
         cmds.forEach((c) => {
             this.addListener(c.eventName, c.listener, {client: this, listener: c});
 
-            if (isType<Initialisable, Command>(c, ['initialise'])) {
+            if (isType<Initialisable, Command<T>>(c, ['initialise'])) {
                 c.initialise(this);
             }
 
@@ -90,7 +90,7 @@ class Veikka extends Client {
             this.publishers.forEach((p) => p.stopTimer());
             this.channels = [];
             this.commands
-                .filter((c): c is Command & Closeable => isType(c, ['close']))
+                .filter((c): c is Command<unknown> & Closeable => isType(c, ['close']))
                 .forEach((c) => c.close(this));
         });
     }

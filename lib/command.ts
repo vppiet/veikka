@@ -1,15 +1,11 @@
-import {Logger} from 'winston';
 import {PrivMsgEvent} from 'irc-framework';
+import {Logger} from 'winston';
 
+import {CommandParam} from 'commandParam';
 import {EventListener} from './listener';
-import {Context, capitalize, isAdmin} from './util';
 import {getLogger} from './logger';
+import {Context, PropertyValue, capitalize, isAdmin} from './util';
 import {Veikka} from './veikka';
-
-type Params = {
-    req: string[],
-    opt: string[],
-};
 
 const PRIVILEGE_LEVEL = {
     USER: 100,
@@ -17,45 +13,63 @@ const PRIVILEGE_LEVEL = {
     ADMIN: 200,
 } as const;
 
-const PARAM_SEP = ', ';
+const ARG_SEP = ' ';
 
-abstract class Command implements EventListener {
-    readonly eventName = 'privmsg';
-    readonly prefix: string;
-    readonly name: string;
-    readonly help: string[];
-    readonly reqParams: number;
-    readonly optParams: number;
-    readonly privilegeLevel: typeof PRIVILEGE_LEVEL[keyof typeof PRIVILEGE_LEVEL];
-    readonly logger: Logger;
+abstract class Command<P> implements EventListener {
+    eventName = 'privmsg';
+    prefix: string;
+    name: string;
+    help: string[];
+    params: CommandParam<P>[];
+    privilegeLevel: PropertyValue<typeof PRIVILEGE_LEVEL>;
+    logger: Logger;
 
-    constructor(prefix: string, name: string, help: string[], reqParams = 0, optParams = 0,
-        privilegeLevel: typeof PRIVILEGE_LEVEL[keyof typeof PRIVILEGE_LEVEL] =
-        PRIVILEGE_LEVEL.USER) {
+    constructor(prefix: string, name: string, help: string[], params: CommandParam<P>[] = [],
+        privilegeLevel: PropertyValue<typeof PRIVILEGE_LEVEL> = PRIVILEGE_LEVEL.USER) {
         this.prefix = prefix;
         this.name = name;
         this.help = help;
-        this.reqParams = reqParams;
-        this.optParams = optParams;
+        this.params = params;
         this.privilegeLevel = privilegeLevel;
         this.logger = getLogger('Command-' + this.name);
     }
 
-    abstract eventHandler(event: PrivMsgEvent, params: Params, client: Veikka): void;
-
-    listener(this: Context<Command>, event: PrivMsgEvent) {
-        const cmd = this.listener;
-        if (!cmd.match(event.message, event.ident, event.hostname)) {
-            return;
-        }
-
-        const params = cmd.parseParameters(event.message);
-        cmd.logger.info(event);
-        cmd.eventHandler(event, params, this.client);
+    getHelp(...input: string[]) {
+        return this.createSay(...this.help, ...input);
     }
 
     getPrefixedName() {
         return this.prefix + this.name;
+    }
+
+    getArgsParts(message: string) {
+        return this.getMsgTail(message)
+            .split(ARG_SEP)
+            .map((p) => p.trim())
+            .filter((p) => p.length);
+    }
+
+    getMsgTail(message: string) {
+        return message.slice(this.getPrefixedName().length + 1).trim();
+    }
+
+    listener(this: Context<Command<P>>, event: PrivMsgEvent) {
+        const {client, listener: cmd} = this;
+
+        if (!cmd.match(event.message, event.ident, event.hostname)) {
+            return;
+        }
+
+        const argParts = cmd.getArgsParts(event.message);
+        const argsParseResult = cmd.parseArguments(argParts);
+
+        cmd.logger.info({command: cmd.getPrefixedName(), argsParseResult});
+
+        if ('error' in argsParseResult) {
+            cmd.reply(event, argsParseResult.error);
+        } else if ('args' in argsParseResult) {
+            cmd.eventHandler(event, argsParseResult.args, client);
+        }
     }
 
     match(str: string, ident?: string, hostname?: string) {
@@ -72,32 +86,10 @@ abstract class Command implements EventListener {
             if (!isAdmin(ident, hostname)) return false;
         }
 
-        const params = str.slice(cmd.length)
-            .split(PARAM_SEP)
-            .map((p) => p.trim())
-            .filter((p) => p.length !== 0);
-
-        return params.length >= this.reqParams;
+        return true;
     }
 
-    parseParameters(message: string) {
-        const paramCount = this.reqParams + this.optParams;
-
-        // https://stackoverflow.com/a/5582719
-        const parts = message.trimStart()
-            .slice(this.getPrefixedName().length + 1)
-            .split(PARAM_SEP);
-        const tail = parts.slice(paramCount - 1).join(PARAM_SEP);
-        let params = parts.slice(0, paramCount - 1);
-        if (tail) params.push(tail);
-
-        params = params.map((p) => p.trim());
-
-        return {
-            req: params.slice(0, this.reqParams),
-            opt: params.slice(this.reqParams),
-        };
-    }
+    abstract eventHandler(event: PrivMsgEvent, args: P[], client: Veikka): void;
 
     createSay(...input: string[]) {
         const capitalizedName = capitalize(this.name);
@@ -105,9 +97,37 @@ abstract class Command implements EventListener {
         return input.join(' | ');
     }
 
-    getHelp(...input: string[]) {
-        return this.createSay(...this.help, ...input);
+    parseArguments(msgParts: string[]): {args: P[]} | {error: string} {
+        const args: P[] = [];
+
+        if (this.params.length === 0) {
+            return {args};
+        }
+
+        let parts = msgParts;
+
+        for (const param of this.params) {
+            const result = param.parse(parts);
+
+            if ('error' in result) {
+                if (param.required) {
+                    return {error: result.error};
+                } else {
+                    return {args};
+                }
+            }
+
+            parts = parts.slice(result.consumed.length);
+            args.push(result.value);
+        }
+
+        return {args};
+    }
+
+    reply(event: PrivMsgEvent, ...segments: string[]) {
+        event.reply(this.createSay(...segments));
     }
 }
 
-export {Params, PRIVILEGE_LEVEL, PARAM_SEP, Command};
+export {ARG_SEP, Command, PRIVILEGE_LEVEL};
+

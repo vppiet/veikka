@@ -16,8 +16,5 @@ describe('moon', () => {
 
         const date3 = new Date(1989, 1, 15, 12, 0, 0, 0);
         expect(getMoonIllumination(date3)).toBeCloseTo(0.75);
-
-        const date4 = new Date();
-        expect(getMoonIllumination(date4)).toBeCloseTo(0.72);
     });
 });

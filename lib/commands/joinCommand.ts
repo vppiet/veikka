@@ -1,26 +1,44 @@
 import {PrivMsgEvent} from 'irc-framework';
 
-import {Command, PRIVILEGE_LEVEL, Params} from '../command';
-import {Veikka} from 'veikka';
+import {Command, PRIVILEGE_LEVEL} from '../command';
+import {Veikka} from '../veikka';
+import {CommandParam} from '../commandParam';
 
-class JoinCommand extends Command {
+class JoinCommand extends Command<string> {
     constructor() {
         super('.', 'liity', [
             '.liity <kanava>',
             'Liity kanavalle.',
-        ], 1, 0, PRIVILEGE_LEVEL.ADMIN);
+        ], [channelParam], PRIVILEGE_LEVEL.ADMIN);
     }
 
-    eventHandler(event: PrivMsgEvent, params: Params, client: Veikka): void {
-        const target = params.req[0];
+    eventHandler(event: PrivMsgEvent, args: [string], client: Veikka) {
+        const [channel] = args;
 
         // already in the buffer
-        if (client.channels.findIndex((c) => c.name === target) !== -1) return;
+        if (client.channels.findIndex((c) => c.name === channel) !== -1) {
+            return;
+        }
 
-        const channel = client.channel(target);
-        channel.join();
-        client.channels.push(channel);
+        const channelObj = client.channel(channel);
+        channelObj.join();
+        client.channels.push(channelObj);
     }
 }
+
+const channelParam: CommandParam<string> = {
+    required: true,
+    parse: function(parts: string[]) {
+        if (!parts[0]) {
+            return {error: 'Kanava puuttuu'};
+        }
+
+        if (!parts[0].startsWith('#')) {
+            return {error: 'Kanavan on alettava #-merkillä'};
+        }
+
+        return {value: parts[0], consumed: [parts[0]]};
+    },
+};
 
 export {JoinCommand};

@@ -1,42 +1,36 @@
-import {format, parse} from 'date-fns';
-import {PrivMsgEvent} from '../../types/irc-framework';
+import {format} from 'date-fns';
+import {PrivMsgEvent} from 'irc-framework';
 import {round} from 'lodash';
 
-import {Veikka} from 'veikka';
-import {Command, Params} from '../command';
+import {Command} from '../command';
+import {CommandParam, parseDateTime} from '../commandParam';
 import {getMoonIllumination} from './resources/moon';
+import {DATETIME_FORMAT} from './resources/time';
 
-const DATETIME_FORMAT = 'd.M.yyyy \'klo\' HH:mm';
-
-class MoonCommand extends Command {
+class MoonCommand extends Command<Date> {
     constructor() {
         super('.', 'kuu', [
-            '.kuu [pvämäärä]',
-            'Näytä tämän hetkinen tai tietyn ajankohdan (muodossa pp.kk.vvvv klo tt:ss) ' +
-                'kuun valaistumisaste.',
-            'Esim: ".kuu"',
-            'Esim. ".kuu 2.12.2023 klo 21:13"',
-        ], 0, 1);
+            '.kuu [aikamääre]',
+            'Näytä nykyinen tai tietyn ajankohdan kuun valaistumisaste prosentteina.',
+            'Esim. ".kuu", ".kuu 2.12.2023 klo 21:13", ".kuu huomenna',
+        ], [dateTimeParam]);
     }
 
-    eventHandler(event: PrivMsgEvent, params: Params, client: Veikka) {
-        let now = true;
-        let date = new Date();
-
-        const parsedDate = parse(params.opt[0], DATETIME_FORMAT, new Date());
-        if (!Number.isNaN(parsedDate.getTime())) {
-            date = parsedDate;
-            now = false;
-        }
+    eventHandler(event: PrivMsgEvent, params: [Date]) {
+        const date = params[0] ?? new Date();
 
         const ill = getMoonIllumination(date);
         const illPercent = round(ill * 100, 1);
 
-        event.reply(this.createSay(
-            `${illPercent} % kuun pinta-alasta on valaistu ajankohtana ` +
-                format(date, DATETIME_FORMAT),
-        ));
+        this.reply(event, `${illPercent} % valaistuneena`, format(date, DATETIME_FORMAT));
     }
 }
+
+const dateTimeParam: CommandParam<Date> = {
+    required: false,
+    parse: function(parts: string[]) {
+        return parseDateTime(parts, new Date());
+    },
+};
 
 export {MoonCommand};

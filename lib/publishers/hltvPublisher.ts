@@ -2,7 +2,8 @@ import {JoinEvent} from 'irc-framework';
 import Parser from 'rss-parser';
 
 import {Publisher} from '../publisher';
-import {Context, INTERVAL} from '../util';
+import {Context} from '../util';
+import {INTERVAL} from '../commands/resources/time';
 import {Veikka} from 'veikka';
 
 class HltvPublisher implements Publisher {

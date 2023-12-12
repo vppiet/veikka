@@ -1,6 +1,6 @@
-import {Logger} from 'winston';
 import Database, {Statement} from 'bun:sqlite';
 import {resolve} from 'node:path';
+import {Logger} from 'winston';
 
 import {getLogger} from 'logger';
 import {getCacheDir} from '../util';
@@ -11,10 +11,10 @@ CREATE TABLE IF NOT EXISTS noun(
     word TEXT NOT NULL UNIQUE
 );`;
 
-type NounRow = {
+interface NounRow {
     id: number;
     word: string;
-};
+}
 
 class NounTable {
     logger: Logger;
@@ -50,13 +50,12 @@ class NounTable {
     }
 
     async loadWords() {
-        let count = this.getCount.get()?.count;
-        count = count === null || count === undefined ? 0 : count;
+        const count = this.getCount.get()?.count ?? 0;
 
         this.logger.debug(`${count} nouns in the database.`);
 
         if (count > 0) {
-            this.logger.debug('At least one noun exists, not loading the external word list');
+            this.logger.debug('At least one noun exists; not loading the external word list');
             return;
         }
 

@@ -1,9 +1,10 @@
 import {PrivMsgEvent} from 'irc-framework';
 
-import {Command, PRIVILEGE_LEVEL, Params} from '../command';
-import {Veikka} from 'veikka';
+import {Command, PRIVILEGE_LEVEL} from '../command';
+import {CommandParam} from '../commandParam';
+import {Veikka} from '../veikka';
 
-class HelpCommand extends Command {
+class HelpCommand extends Command<string> {
     constructor() {
         super('.', 'ohje', [
             '.ohje [komento]',
@@ -11,17 +12,17 @@ class HelpCommand extends Command {
                 'mikä palauttaa ko. komennon ohjeen. ' +
                 'Komentojen argumentit erotetaan pilkuilla ja merkitään ' +
                 'seuraavasti: .komento <pakollinen>, [vaihtoehtoinen]',
-        ], 0, 1);
+        ], [cmdParam]);
     }
 
-    eventHandler(event: PrivMsgEvent, params: Params, client: Veikka): void {
-        // show only default-privileged commands
+    eventHandler(event: PrivMsgEvent, params: [string], client: Veikka): void {
+        // show only user-privileged commands
         const cmds = client.commands.filter((c) => c.privilegeLevel === PRIVILEGE_LEVEL.USER);
         const cmdsList = cmds.sort((a, b) => a.name.localeCompare(b.name));
         const cmdsStr = 'Komennot: ' + cmdsList.map((c) => c.getPrefixedName()).join(', ');
         const cmdNamesStr = 'Komentojen nimet: ' + cmdsList.map((c) => c.name).join(', ');
 
-        const name = params.opt[0];
+        const name = params[0];
 
         if (name) {
             const filtered = cmds.filter((c) => {
@@ -39,5 +40,12 @@ class HelpCommand extends Command {
         }
     }
 }
+
+const cmdParam: CommandParam<string> = {
+    required: false,
+    parse: function(parts: string[]) {
+        return {value: parts[0], consumed: [parts[0]]};
+    },
+};
 
 export {HelpCommand};

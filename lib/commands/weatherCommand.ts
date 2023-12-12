@@ -1,24 +1,40 @@
-import {PrivMsgEvent} from 'irc-framework';
-
-import {Command, Params} from '../command';
-import {ApiError, BASE_URL, Coordinates, CurrentWeather, KPH_TO_MPS_MULTIPLIER,
-    LOCATION_NOT_FOUND_ERROR} from './resources/weatherApi';
 import {fromUnixTime} from 'date-fns';
 import {format} from 'date-fns-tz';
+import {PrivMsgEvent} from 'irc-framework';
 
-class CurrentWeatherCommand extends Command {
+import {CommandParam} from 'commandParam';
+import {ARG_SEP, Command} from '../command';
+import {
+    ApiError, BASE_URL, Coordinates, CurrentWeather,
+    KPH_TO_MPS_MULTIPLIER, LOCATION_NOT_FOUND_ERROR,
+} from './resources/weatherApi';
+
+const locationParam: CommandParam<string> = {
+    required: true,
+    parse: function(parts: string[]) {
+        const location = parts.join(ARG_SEP);
+
+        if (location) {
+            return {value: location, consumed: parts};
+        }
+
+        return {error: 'Paikkakunta puuttuu'};
+    },
+};
+
+class CurrentWeatherCommand extends Command<string> {
     constructor() {
         super('.', 'sää', [
             '.sää <paikkakunta>',
             'Hae paikkakunnan sääolosuhteet.',
-        ], 1);
+        ], [locationParam]);
     }
 
-    async eventHandler(event: PrivMsgEvent, params: Params) {
-        const query = params.req[0];
+    async eventHandler(event: PrivMsgEvent, params: [string]) {
+        const [location] = params;
 
-        const url = `${BASE_URL}/current.json?key=${Bun.env['WEATHER_API_KEY']}` +
-            `&q=${encodeURIComponent(query)}`;
+        const url = `${BASE_URL}/current.json?key=${Bun.env.WEATHER_API_KEY}` +
+            `&q=${encodeURIComponent(location)}`;
         const response = await fetch(url);
 
         if (!response.ok) {
@@ -49,17 +65,17 @@ class CurrentWeatherCommand extends Command {
             'Finland' :
             body.location.country;
 
-        const location = [body.location.name, region, country]
+        const locationString = [body.location.name, region, country]
             .filter((l) => l)
             .join(', ');
 
         const coordinates = new Coordinates(body.location.lat, body.location.lon).getISO();
         const lastUpdatedUTC = fromUnixTime(body.current.last_updated_epoch);
         const lastUpdated = format(lastUpdatedUTC, 'd.M.yyyy HH:mm',
-            {timeZone: Bun.env.TZ || 'Europe/Helsinki'});
+            {timeZone: Bun.env.TZ ?? 'Europe/Helsinki'});
 
         event.reply(this.createSay(
-            location,
+            locationString,
             `${body.current.temp_c} °C (${body.current.feelslike_c} °C)`,
             `${windMps} m/s (${gustMps} m/s)`,
             body.current.humidity + ' %',

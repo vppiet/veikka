@@ -1,68 +1,84 @@
-import {PrivMsgEvent} from 'irc-framework';
-import {milliseconds, parse, isValid, isPast, addMilliseconds, format,
-    getUnixTime, differenceInMilliseconds, formatDistance} from 'date-fns';
+import {
+    add,
+    addMilliseconds,
+    differenceInMilliseconds,
+    format,
+    formatDistance,
+    getUnixTime,
+    isPast
+} from 'date-fns';
 import {utcToZonedTime} from 'date-fns-tz';
 import {fi} from 'date-fns/locale';
+import {PrivMsgEvent} from 'irc-framework';
 
-import {Command, Params} from '../command';
-import {Closeable, INTERVAL, Initialisable} from '../util';
-import {Veikka} from '../veikka';
-import {ReminderRow, ReminderTable} from '../db/reminder';
 import Database from 'bun:sqlite';
+import {ARG_SEP, Command} from '../command';
+import {CommandParam, parseDateTime, parseDuration} from '../commandParam';
+import {ReminderRow, ReminderTable} from '../db/reminder';
+import {Closeable, Initialisable} from '../util';
+import {Veikka} from '../veikka';
+import {DATETIME_FORMAT, INTERVAL} from './resources/time';
 
-const FORMAT_DATETIME = 'd.M.yyyy \'klo\' HH:mm';
 const UPDATE_INTERVAL = 29 * INTERVAL.MINUTE;
 const MAX_TIMER_INTERVAL = INTERVAL.HOUR;
 
-class TimeDelta {
-    v?: number;
-    kk?: number;
-    p?: number;
-    t?: number;
-    m?: number;
-    s?: number;
-}
-
-type ReminderTimer = {
+interface ReminderTimer {
     id?: number;
     timer: Timer;
+}
+
+const datetimeParam: CommandParam<Date> = {
+    required: true,
+    parse: function(parts: string[]) {
+        if (!parts.length) {
+            return {error: 'Aikamääre puuttuu'};
+        }
+
+        const now = new Date();
+
+        // timestamp & daydelta
+        const datetime = parseDateTime(parts, now);
+        if (datetime.value) {
+            return {value: datetime.value, consumed: datetime.consumed};
+        }
+
+        // duration
+        const duration = parseDuration(parts);
+        if (duration.value) {
+            const reminderDateTime = add(now, duration.value);
+
+            return {value: reminderDateTime, consumed: duration.consumed};
+        }
+
+        return {error: 'Aikamäärettä ei voitu tulkita'};
+    },
 };
 
-function parseDuration(str: string) {
-    const td: TimeDelta = new TimeDelta();
+const msgParam: CommandParam<string> = {
+    required: false,
+    parse: function(parts: string[]) {
+        const msg = parts.join(ARG_SEP);
 
-    let buffer = '';
-    for (let i = 0; i < str.length; i++) {
-        if (!isNaN(Number(str[i])) && i !== str.length - 1) {
-            buffer += str[i];
-        } else if (typeof str[i] === 'string' && str[i] in td) {
-            td[str[i] as keyof typeof td] = Number(buffer);
-            buffer = '';
-        } else {
-            return;
+        if (!msg.length) {
+            return {error: 'Viesti puuttuu'};
         }
-    }
 
-    return td;
-}
+        return {value: msg, consumed: parts};
+    },
+};
 
-function formatForReply(reminderDate: Date, baseDate: Date) {
-    return format(reminderDate, FORMAT_DATETIME) +
-        ` (${formatDistance(reminderDate, baseDate, {addSuffix: true, locale: fi})})`;
-}
-
-class ReminderCommand extends Command implements Initialisable, Closeable {
+class ReminderCommand extends Command<Date | string> implements Initialisable, Closeable {
     timers: ReminderTimer[] = [];
     table: ReminderTable;
     updater?: Timer;
 
     constructor(conn: Database) {
         super('.', 'muistutus', [
-            '.muistutus <aika>, [viesti]',
+            '.muistutus <aikamääre>, [viesti]',
             'Aseta itsellesi muistutus.',
-            'Aika-argumentti voi olla joko ajankohta ("31.10.2023 klo 15:56") ' +
+            'Aikamääre voi olla joko ajankohta ("31.10.2023 klo 15:56") ' +
                 'tai viive ("1v2kk3p4t5m6s")',
-        ], 1, 1);
+        ], [datetimeParam, msgParam]);
         this.table = new ReminderTable(conn);
     }
 
@@ -84,72 +100,21 @@ class ReminderCommand extends Command implements Initialisable, Closeable {
         this.updater = setInterval(updateHandler, UPDATE_INTERVAL);
     }
 
-    eventHandler(event: PrivMsgEvent, params: Params, client: Veikka): void {
-        const reminderTime = params.req[0];
-        const reminderMsg = params.opt[0];
+    eventHandler(event: PrivMsgEvent, params: [Date, string], client: Veikka): void {
+        const [reminderDate, reminderMsg] = params;
+
+        if (isPast(reminderDate)) {
+            this.reply(event, 'Aika on menneisyydessä');
+            return;
+        }
 
         const now = new Date();
-
-        // DURATION
-        const duration = parseDuration(reminderTime);
-        if (duration) {
-            const durationMs = milliseconds({
-                years: duration.v,
-                months: duration.kk,
-                days: duration.p,
-                hours: duration.t,
-                minutes: duration.m,
-                seconds: duration.s,
-            });
-            const reminderDateTime = addMilliseconds(now, durationMs);
-            const row = this.table.insertOne.get({
-                $nick: event.nick,
-                $target: event.target === client.user.nick ? event.nick : event.target,
-                $created_at: getUnixTime(now),
-                $reminder_datetime: getUnixTime(reminderDateTime),
-                // eslint-disable-next-line new-cap
-                $reminder_tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                $reminder_text: reminderMsg,
-            });
-
-            if (row) {
-                this.addTimer(client, row);
-                event.reply(this.createSay(
-                    `Muistutus asetettu ajankohtaan ${formatForReply(reminderDateTime, now)}`,
-                ));
-            } else {
-                event.reply(this.createSay(
-                    'Ääh, jokin meni vikaan.',
-                    'Row insert returned null',
-                ));
-            }
-
-            return;
-        }
-
-        // INSTANT
-        const instant = parse(reminderTime, FORMAT_DATETIME, now);
-
-        if (!isValid(instant.getTime())) {
-            event.reply(this.createSay(
-                'Muistutuksen aika on oltava joko muodossa "1v2kk3p4t5m6s" ' +
-                'tai "31.10.2023 klo 15:56"',
-            ));
-
-            return;
-        }
-
-        if (isPast(instant)) {
-            event.reply(this.createSay('Ajankohta on menneisyydessä'));
-
-            return;
-        }
 
         const row = this.table.insertOne.get({
             $nick: event.nick,
             $target: event.target === client.user.nick ? event.nick : event.target,
             $created_at: getUnixTime(now),
-            $reminder_datetime: getUnixTime(instant),
+            $reminder_datetime: getUnixTime(reminderDate),
             // eslint-disable-next-line new-cap
             $reminder_tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
             $reminder_text: reminderMsg,
@@ -157,15 +122,17 @@ class ReminderCommand extends Command implements Initialisable, Closeable {
 
         if (row) {
             this.addTimer(client, row);
-            event.reply(this.createSay(
-                `Muistutus asetettu ajankohtaan ${formatForReply(instant, now)}`,
-            ));
+            this.reply(event,
+                `Muistutus asetettu ajankohtaan ${this.formatForReply(reminderDate, now)}`,
+            );
         } else {
-            event.reply(this.createSay(
-                'Ääh, jokin meni vikaan.',
-                'Row insert returned null',
-            ));
+            this.reply(event, 'Odottamaton virhe: muistutusta ei pystytty tallentamaan');
         }
+    }
+
+    formatForReply(reminderDate: Date, baseDate: Date) {
+        return format(reminderDate, DATETIME_FORMAT) +
+            ` (${formatDistance(reminderDate, baseDate, {addSuffix: true, locale: fi})})`;
     }
 
     addTimer(client: Veikka, row: ReminderRow) {
@@ -173,17 +140,20 @@ class ReminderCommand extends Command implements Initialisable, Closeable {
             const msg = row.reminder_text ? `"${row.reminder_text}"` : 'Ei viestiä';
             client.say(row.target, this.createSay(
                 msg,
-                `Luonut ${row.nick} ajankohdassa ${format(utcToZonedTime(row.created_at * 1000,
-                    row.reminder_tz), FORMAT_DATETIME)}`,
+                `Luonut ${row.nick}`,
+                `${format(
+                    utcToZonedTime(row.created_at * 1000, row.reminder_tz),
+                    DATETIME_FORMAT,
+                )}`,
             ));
 
             this.table.deleteOne.run({$id: row.id});
             this.removeTimer(row.id);
         };
 
-        const laterDate = utcToZonedTime(row.reminder_datetime * 1000, row.reminder_tz);
-        const earlierDate = utcToZonedTime(row.created_at * 1000, row.reminder_tz);
-        const timeout = differenceInMilliseconds(laterDate, earlierDate);
+        const reminderDate = utcToZonedTime(row.reminder_datetime * 1000, row.reminder_tz);
+        const now = new Date();
+        const timeout = differenceInMilliseconds(reminderDate, now);
 
         this.timers.push({id: row.id, timer: setTimeout(handler, timeout)});
     }
@@ -194,7 +164,9 @@ class ReminderCommand extends Command implements Initialisable, Closeable {
     }
 
     clearTimers() {
-        this.timers.forEach((t) => clearTimeout(t.timer));
+        this.timers.forEach((t) => {
+            clearTimeout(t.timer);
+        });
     }
 
     clearUpdater() {

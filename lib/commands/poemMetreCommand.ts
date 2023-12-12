@@ -1,13 +1,13 @@
 import Database from 'bun:sqlite';
 import {PrivMsgEvent} from '../../types/irc-framework';
 
-import {Command, Params} from '../command';
+import {ARG_SEP, Command} from '../command';
+import {CommandParam} from '../commandParam';
 import {NounTable} from '../db/noun';
 import {Closeable, Initialisable} from '../util';
 import {Syllabificator} from './resources/textAnalysis';
-import {Veikka} from '../veikka';
 
-class PoemMetreCommand extends Command implements Initialisable, Closeable {
+class PoemMetreCommand extends Command<string> implements Initialisable, Closeable {
     nounTable: NounTable;
     syllabificator: Syllabificator;
 
@@ -16,27 +16,21 @@ class PoemMetreCommand extends Command implements Initialisable, Closeable {
             '.runomitta <runo>',
             'Tavuta runo ja kerro runon poljennoton mitta. ' +
                 'Vinoviiva ("/") runossa erottaa säkeen toisistaan.',
-        ], 1);
+        ], [poemParam]);
         this.nounTable = new NounTable(conn);
         this.syllabificator = new Syllabificator(this.nounTable);
     }
 
-    async initialise(client: Veikka) {
+    async initialise() {
         await this.nounTable.loadWords();
     }
 
-    close(client: Veikka) {
+    close() {
         this.nounTable.finalizeAll();
     }
 
-    eventHandler(event: PrivMsgEvent, params: Params) {
-        const poem = params.req[0];
-
-        if (poem.length < 3) {
-            event.reply(this.createSay('Runossa on oltava vähintään kolme kirjainta.'));
-            return;
-        }
-
+    eventHandler(event: PrivMsgEvent, args: [string]) {
+        const [poem] = args;
         const verses = poem.split('/')
             .map((verse) => {
                 return verse.trim()
@@ -46,12 +40,24 @@ class PoemMetreCommand extends Command implements Initialisable, Closeable {
 
         const metre = verses.map((v) => v.flat().length);
 
-        const reply = this.createSay(
+        const reply = [
             verses.map((v) => v.map((w) => w.join('-')).join(' ')).join(' / '),
-            metre.join('-'),
-        );
-        event.reply(reply);
+            metre.join('-')];
+        this.reply(event, ...reply);
     }
 }
+
+const poemParam: CommandParam<string> = {
+    required: true,
+    parse: function(parts: string[]) {
+        const poem = parts.join(ARG_SEP);
+
+        if (poem.length < 3) {
+            return {error: 'Runossa on oltava vähintään kolme kirjainta.'};
+        }
+
+        return {value: poem, consumed: parts};
+    },
+};
 
 export {PoemMetreCommand};

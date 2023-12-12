@@ -1,29 +1,24 @@
 import {Statement} from 'bun:sqlite';
+import {mkdir} from 'fs/promises';
 import {IrcEvent, MiddlewareHandler} from 'irc-framework';
 import {resolve} from 'path';
-import {mkdir} from 'fs/promises';
 
 import {Veikka} from './veikka';
 
-type Context<L> = {
+interface Context<L> {
     client: Veikka;
     listener: L;
-};
+}
 
-type Initialisable = {
+interface Initialisable {
     initialise(client: Veikka): void;
-};
+}
 
 interface Closeable {
     close(client: Veikka): void;
 }
 
 type PropertyValue<T extends Record<PropertyKey, unknown>> = T[keyof T];
-
-const INTERVAL = {
-    MINUTE: 1000 * 60,
-    HOUR: 1000 * 60 * 60,
-} as const;
 
 function isType<T extends object, U extends object>(o: U, props: string[]): o is T & U {
     return props.every((p) => p in o);
@@ -43,7 +38,7 @@ function useParsedEvents(handler: (command: string, event: IrcEvent, client: Vei
 }
 
 function isAdmin(ident: string, hostname: string) {
-    return ident + '@' + hostname === Bun.env['ADMIN_MASK'];
+    return ident + '@' + hostname === Bun.env.ADMIN_MASK;
 }
 
 function capitalize(input: string) {
@@ -78,18 +73,17 @@ async function getCacheDir() {
     return path;
 }
 
+function isNumber(value: unknown) {
+    return !Number.isNaN(Number(value));
+}
+
+function objectKeys<T extends object>(obj: T): (keyof T)[] {
+    return Object.keys(obj) as (keyof T)[];
+}
+
 export {
-    Context,
-    Initialisable,
-    Closeable,
-    PropertyValue,
-    INTERVAL,
-    isType,
-    isEventType,
-    useParsedEvents,
-    isAdmin,
-    capitalize,
-    finalizeAll,
-    peek,
-    getCacheDir,
+    Closeable, Context,
+    Initialisable, PropertyValue, capitalize,
+    finalizeAll, getCacheDir, isAdmin, isEventType,
+    isNumber, isType, objectKeys, peek, useParsedEvents
 };

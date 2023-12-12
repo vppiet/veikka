@@ -1,5 +1,5 @@
 import {describe, test, expect} from 'bun:test';
-import {calculate, lexer} from '../calculation';
+import {calculate, lexer} from '../mathematical';
 
 describe('calculate', () => {
     test('lexer simple', () => {

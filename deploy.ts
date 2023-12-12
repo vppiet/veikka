@@ -7,11 +7,11 @@ import {ReminderCommand} from './lib/commands/reminderCommand';
 import {CurrentWeatherCommand} from './lib/commands/weatherCommand';
 import {CalculateCommand} from './lib/commands/calculateCommand';
 import {PoemMetreCommand} from './lib/commands/poemMetreCommand';
-import {AstroCommand} from './lib/commands/astroCommand';
+import {SunCommand} from './lib/commands/sunCommand';
 import {DebugCommand} from './lib/commands/debugCommand';
 import {MessageCommand} from './lib/commands/messageCommand';
 import {MoonCommand} from './lib/commands/moonCommand';
-import {INTERVAL} from './lib/util';
+import {INTERVAL} from './lib/commands/resources/time';
 
 const veikka = await Veikka.create();
 const db = veikka.db;
@@ -24,10 +24,10 @@ veikka.addCommand(new HelpCommand())
     .addCommand(new CurrentWeatherCommand())
     .addCommand(new CalculateCommand())
     .addCommand(new PoemMetreCommand(db))
-    .addCommand(new AstroCommand())
+    .addCommand(new SunCommand())
+    .addCommand(new MoonCommand())
     .addCommand(new DebugCommand())
-    .addCommand(new MessageCommand())
-    .addCommand(new MoonCommand());
+    .addCommand(new MessageCommand());
 
 veikka.connect({
     nick: Bun.env['NICK'],
