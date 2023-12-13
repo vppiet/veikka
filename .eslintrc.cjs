@@ -15,10 +15,6 @@ module.exports = {
     rules: {
         indent: ['error', 4],
         'max-len': ['error', 100],
-        'require-jsdoc': 'off',
-        'valid-jsdoc': 'off',
-        'no-unused-vars': 'off',
-        '@typescript-eslint/no-unused-vars': 'off',
         'eol-last': 1,
     },
 };
