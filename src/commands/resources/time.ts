@@ -3,7 +3,7 @@ import {addDays, parse} from 'date-fns';
 const DATE_WO_YEAR_FORMAT = 'd.M.';
 const DATE_FORMAT = 'd.M.yyyy';
 const DATETIME_FORMAT = 'd.M.yyyy \'klo\' HH:mm';
-const TIME_FORMAT_24H = 'HH:mm';
+const TIME_24H_FORMAT = 'HH:mm';
 
 const INTERVAL: Readonly<Record<string, number>> = {
     MINUTE: 1000 * 60,
@@ -23,7 +23,7 @@ function getDateFromDayDelta(name: string, defaultDate: Date, time?: string) {
     }
 
     const dayDelta = DAY_DELTAS[name];
-    const dayDeltaTime = time ? parse(time, TIME_FORMAT_24H, defaultDate) : defaultDate;
+    const dayDeltaTime = time ? parse(time, TIME_24H_FORMAT, defaultDate) : defaultDate;
 
     if (Number.isNaN(dayDeltaTime.getTime())) {
         return {error: `Kellonaikaa "${time}" ei voitu tulkita`};
@@ -37,11 +37,11 @@ function getDateFromDayDelta(name: string, defaultDate: Date, time?: string) {
 }
 
 export {
-    DATE_WO_YEAR_FORMAT,
-    DATE_FORMAT,
     DATETIME_FORMAT,
-    TIME_FORMAT_24H,
-    INTERVAL,
+    DATE_FORMAT,
+    DATE_WO_YEAR_FORMAT,
     DAY_DELTAS,
-    getDateFromDayDelta,
+    INTERVAL,
+    TIME_24H_FORMAT,
+    getDateFromDayDelta
 };

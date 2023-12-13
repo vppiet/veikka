@@ -1,12 +1,13 @@
-import { fromUnixTime } from 'date-fns';
-import { format } from 'date-fns-tz';
-import { PrivMsgEvent } from '../types/irc-framework/irc-framework';
+import {fromUnixTime} from 'date-fns';
+import {format} from 'date-fns-tz';
+import {PrivMsgEvent} from 'irc-framework';
 
-import { ARG_SEP, Command } from '../command';
-import { CommandParam } from '../commandParam';
+import {ARG_SEP, Command} from '../command';
+import {CommandParam} from '../commandParam';
 import {
-    ApiError, BASE_URL, Coordinates, CurrentWeather,
-    KPH_TO_MPS_MULTIPLIER, LOCATION_NOT_FOUND_ERROR,
+    ApiError, BASE_URL,
+    CurrentWeather,
+    KPH_TO_MPS_MULTIPLIER, LOCATION_NOT_FOUND_ERROR
 } from './resources/weatherApi';
 
 class CurrentWeatherCommand extends Command<string> {
@@ -41,22 +42,15 @@ class CurrentWeatherCommand extends Command<string> {
         const windMps = (body.current.wind_kph * KPH_TO_MPS_MULTIPLIER).toFixed(1);
         const gustMps = (body.current.gust_kph * KPH_TO_MPS_MULTIPLIER).toFixed(1);
 
-        // fix some anomalies with weatherapi.com
-        // - when location is in Oulu region
-        const region = body.location.region === 'Oulu' ?
-            'North Ostrobothnia' :
-            body.location.region;
-
         // - when query contains a or o with umlaut for Finland
         const country = ['Финляндия', 'Finnland', 'Finlande'].includes(body.location.country) ?
             'Finland' :
             body.location.country;
 
-        const locationString = [body.location.name, region, country]
+        const locationString = [body.location.name, country]
             .filter((l) => l)
             .join(', ');
 
-        const coordinates = new Coordinates(body.location.lat, body.location.lon).getISO();
         const lastUpdatedUTC = fromUnixTime(body.current.last_updated_epoch);
         const lastUpdated = format(lastUpdatedUTC, 'd.M.yyyy HH:mm',
             {timeZone: Bun.env.TZ ?? 'Europe/Helsinki'});
@@ -69,7 +63,6 @@ class CurrentWeatherCommand extends Command<string> {
             body.current.pressure_mb + ' mbar',
             body.current.precip_mm + ' mm',
             body.current.condition.text,
-            coordinates,
             lastUpdated,
         ));
     }
@@ -88,5 +81,5 @@ const locationParam: CommandParam<string> = {
     },
 };
 
-export { CurrentWeatherCommand };
+export {CurrentWeatherCommand};
 

@@ -1,9 +1,9 @@
-import { Statement } from 'bun:sqlite';
-import { mkdir } from 'fs/promises';
-import { resolve } from 'path';
+import {Statement} from 'bun:sqlite';
+import {mkdir} from 'fs/promises';
+import {IrcEvent, MiddlewareHandler} from 'irc-framework';
+import {resolve} from 'path';
 
-import { IrcEvent, MiddlewareHandler } from './types/irc-framework';
-import { Veikka } from './veikka';
+import {Veikka} from './veikka';
 
 interface Context<L> {
     client: Veikka;

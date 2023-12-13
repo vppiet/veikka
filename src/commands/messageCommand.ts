@@ -1,8 +1,8 @@
-import { PrivMsgEvent } from '../types/irc-framework';
+import {PrivMsgEvent} from 'irc-framework';
 
-import { ARG_SEP, Command, PRIVILEGE_LEVEL } from '../command';
-import { CommandParam } from '../commandParam';
-import { Veikka } from '../veikka';
+import {ARG_SEP, Command, PRIVILEGE_LEVEL} from '../command';
+import {CommandParam} from '../commandParam';
+import {Veikka} from '../veikka';
 
 class MessageCommand extends Command<string> {
     constructor() {
@@ -48,5 +48,5 @@ const msgParam: CommandParam<string> = {
     },
 };
 
-export { MessageCommand };
+export {MessageCommand};
 

@@ -1,8 +1,7 @@
 import {Database} from 'bun:sqlite';
 import {
-    Channel,
-    Client,
-    IrcClientOptions, JoinEvent, RegisteredEvent
+    Channel, Client, IrcClientOptions,
+    JoinEvent, RegisteredEvent
 } from 'irc-framework';
 import {Logger} from 'winston';
 
@@ -38,8 +37,7 @@ class Veikka extends Client {
 
     addCommand<T>(...cmds: Command<T>[]) {
         cmds.forEach((c) => {
-            const listenerBound = c.listener.bind({client: this, listener: c})
-            this.addListener(c.eventName, listenerBound);
+            this.addListener(c.eventName, c.listener, {client: this, listener: c});
 
             if (isType<Initialisable, Command<T>>(c, ['initialise'])) {
                 c.initialise(this);
@@ -59,7 +57,7 @@ class Veikka extends Client {
             const domain = this.options.host?.split('.').slice(-2).join('.');
 
             if (domain && Object.keys(networks).includes(domain)) {
-                networks[domain].handler(this);
+                networks[domain].onRegistered(this);
             } else {
                 this.emit('network services');
             }

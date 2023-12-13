@@ -1,11 +1,11 @@
-import { Logger } from 'winston';
-import { PrivMsgEvent } from './types/irc-framework';
+import {PrivMsgEvent} from 'irc-framework';
+import {Logger} from 'winston';
 
-import { CommandParam } from './commandParam';
-import { EventListener } from './listener';
-import { getLogger } from './logger';
-import { Context, PropertyValue, capitalize, isAdmin } from './util';
-import { Veikka } from './veikka';
+import {CommandParam} from './commandParam';
+import {EventListener} from './listener';
+import {getLogger} from './logger';
+import {Context, PropertyValue, isAdmin} from './util';
+import {Veikka} from './veikka';
 
 const PRIVILEGE_LEVEL = {
     USER: 100,
@@ -92,8 +92,6 @@ abstract class Command<P> implements EventListener {
     abstract eventHandler(event: PrivMsgEvent, args: P[], client: Veikka): void;
 
     createSay(...input: string[]) {
-        const capitalizedName = capitalize(this.name);
-        input.unshift(capitalizedName);
         return input.join(' | ');
     }
 
@@ -129,5 +127,5 @@ abstract class Command<P> implements EventListener {
     }
 }
 
-export { ARG_SEP, Command, PRIVILEGE_LEVEL };
+export {ARG_SEP, Command, PRIVILEGE_LEVEL};
 

@@ -1,8 +1,8 @@
-import { PrivMsgEvent } from '../types/irc-framework';
+import {PrivMsgEvent} from 'irc-framework';
 
-import { ARG_SEP, Command, PRIVILEGE_LEVEL } from '../command';
-import { CommandParam } from '../commandParam';
-import { Veikka } from '../veikka';
+import {ARG_SEP, Command, PRIVILEGE_LEVEL} from '../command';
+import {CommandParam} from '../commandParam';
+import {Veikka} from '../veikka';
 
 class QuitCommand extends Command<string> {
     constructor() {
@@ -39,5 +39,5 @@ const quitMsgParam: CommandParam<string> = {
     },
 };
 
-export { QuitCommand };
+export {QuitCommand};
 

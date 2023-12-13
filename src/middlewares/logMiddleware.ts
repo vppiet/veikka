@@ -1,9 +1,9 @@
-import {Logger} from 'winston';
 import {IrcEvent, MiddlewareHandler} from 'irc-framework';
+import {Logger} from 'winston';
 
 import {getLogger} from '../logger';
-import {Veikka} from 'veikka';
-import {IrcMiddleware} from 'middleware';
+import {IrcMiddleware} from '../middleware';
+import {Veikka} from '../veikka';
 
 const ONLY_ON_DEBUG_LEVEL = ['ping', 'pong', 'privmsg', 'message', 'mode', 'userlist'];
 

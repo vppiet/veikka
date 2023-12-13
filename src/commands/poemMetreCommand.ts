@@ -1,11 +1,11 @@
 import Database from 'bun:sqlite';
-import { PrivMsgEvent } from '../types/irc-framework';
+import {PrivMsgEvent} from 'irc-framework';
 
-import { ARG_SEP, Command } from '../command';
-import { CommandParam } from '../commandParam';
-import { NounTable } from '../db/noun';
-import { Closeable, Initialisable } from '../util';
-import { Syllabificator } from './resources/textAnalysis';
+import {ARG_SEP, Command} from '../command';
+import {CommandParam} from '../commandParam';
+import {NounTable} from '../db/noun';
+import {Closeable, Initialisable} from '../util';
+import {Syllabificator} from './resources/textAnalysis';
 
 class PoemMetreCommand extends Command<string> implements Initialisable, Closeable {
     nounTable: NounTable;
@@ -60,5 +60,5 @@ const poemParam: CommandParam<string> = {
     },
 };
 
-export { PoemMetreCommand };
+export {PoemMetreCommand};
 

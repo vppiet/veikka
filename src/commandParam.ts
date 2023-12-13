@@ -2,7 +2,7 @@ import {parse} from 'date-fns';
 
 import {
     DATE_FORMAT, DATE_WO_YEAR_FORMAT,
-    TIME_FORMAT_24H, getDateFromDayDelta,
+    TIME_24H_FORMAT, getDateFromDayDelta,
 } from './commands/resources/time';
 import {isNumber, objectKeys} from './util';
 
@@ -66,10 +66,10 @@ function parseDateTime(parts: string[], defaultDate: Date) {
                 return {error: 'Kellonaika puuttuu'};
             }
 
-            time = parse(parts[2], TIME_FORMAT_24H, defaultDate);
+            time = parse(parts[2], TIME_24H_FORMAT, defaultDate);
             consumed.push(parts[1], parts[2]);
         } else if (parts[1]) {
-            time = parse(parts[1], TIME_FORMAT_24H, defaultDate);
+            time = parse(parts[1], TIME_24H_FORMAT, defaultDate);
             consumed.push(parts[1]);
         }
 

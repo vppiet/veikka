@@ -85,7 +85,13 @@ function lexer(input: string) {
                         OPERATORS[opStack[0]].precedence === OPERATORS[char].precedence &&
                         OPERATORS[char].associativity === ASSOCIATIVITY.LEFT
                     ))) {
-                outputQue.push(opStack.shift()!);
+
+                const firstOp = opStack.shift();
+                if (!firstOp) {
+                    return {error: 'Parse error: operation stack was empty'};
+                }
+
+                outputQue.push(firstOp);
             }
 
             opStack.unshift(char);
@@ -100,7 +106,12 @@ function lexer(input: string) {
                     };
                 }
 
-                outputQue.push(opStack.shift()!);
+                const firstOp = opStack.shift();
+                if (!firstOp) {
+                    return {error: 'Parse error: operation stack was empty'};
+                }
+
+                outputQue.push(firstOp);
             }
 
             opStack.shift();

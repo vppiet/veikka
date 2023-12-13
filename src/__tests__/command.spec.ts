@@ -1,11 +1,18 @@
-import { beforeAll, describe, expect, jest, test } from 'bun:test';
-import { PrivMsgEvent } from '../types/irc-framework';
+import {beforeAll, describe, expect, test} from 'bun:test';
 
-import { Command } from '../command';
+import {Command} from '../command';
+import {CommandParam} from '../commandParam';
 
-class TestCommand extends Command {
+const testParam: CommandParam<string> = {
+    required: true,
+    parse: function () {
+        throw new Error('Function not implemented.');
+    }
+}
+
+class TestCommand extends Command<string> {
     constructor() {
-        super('.', 'test', ['Test case']);
+        super('.', 'test', ['Test case'], [testParam]);
     }
 
     eventHandler(): void {
@@ -13,26 +20,10 @@ class TestCommand extends Command {
     }
 }
 
-const getMockEvent = (message: string, hostname?: string, ident?: string): PrivMsgEvent => {
-    return {
-        from_server: false,
-        nick: '',
-        ident: ident || '',
-        hostname: hostname || '',
-        target: '',
-        message,
-        tags: {},
-        time: 0,
-        account: '',
-        batch: '',
-        reply: jest.fn(),
-    };
-};
-
 describe('Command', () => {
-    let cmd: Command;
+    let cmd: Command<string>;
 
-    beforeAll(async () => {
+    beforeAll(() => {
         cmd = new TestCommand();
     });
 

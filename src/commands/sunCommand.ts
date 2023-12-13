@@ -1,9 +1,9 @@
-import { addDays, parse } from 'date-fns';
-import { PrivMsgEvent } from '../types/irc-framework/irc-framework';
+import {addDays, parse} from 'date-fns';
+import {PrivMsgEvent} from 'irc-framework';
 
-import { ARG_SEP, Command } from '../command';
-import { Veikka } from '../veikka';
-import { DATE_FORMAT } from './resources/time';
+import {ARG_SEP, Command} from '../command';
+import {Veikka} from '../veikka';
+import {DATE_FORMAT} from './resources/time';
 
 const UP_ARROW = '\u2191';
 const DOWN_ARROW = '\u2193';
@@ -83,5 +83,5 @@ class SunCommand extends Command {
     }
 }
 
-export { SunCommand };
+export {SunCommand};
 

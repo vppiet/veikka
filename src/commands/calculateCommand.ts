@@ -1,9 +1,9 @@
-import { round } from 'lodash';
-import { PrivMsgEvent } from '../types/irc-framework';
+import {PrivMsgEvent} from 'irc-framework';
+import {round} from 'lodash';
 
-import { Command } from '../command';
-import { CommandParam } from '../commandParam';
-import { SUPPORTED_CHARS, SYMBOLS, calculate } from './resources/mathematical';
+import {Command} from '../command';
+import {CommandParam} from '../commandParam';
+import {SUPPORTED_CHARS, SYMBOLS, calculate} from './resources/mathematical';
 
 class CalculateCommand extends Command<string | number> {
     constructor() {
@@ -67,5 +67,5 @@ const decimalParam: CommandParam<number> = {
     },
 };
 
-export { CalculateCommand };
+export {CalculateCommand};
 

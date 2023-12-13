@@ -7,17 +7,17 @@ import {
     getUnixTime,
     isPast
 } from 'date-fns';
-import { utcToZonedTime } from 'date-fns-tz';
-import { fi } from 'date-fns/locale';
-import { PrivMsgEvent } from '../types/irc-framework';
+import {utcToZonedTime} from 'date-fns-tz';
+import {fi} from 'date-fns/locale';
+import {PrivMsgEvent} from 'irc-framework';
 
 import Database from 'bun:sqlite';
-import { ARG_SEP, Command } from '../command';
-import { CommandParam, parseDateTime, parseDuration } from '../commandParam';
-import { ReminderRow, ReminderTable } from '../db/reminder';
-import { Closeable, Initialisable } from '../util';
-import { Veikka } from '../veikka';
-import { DATETIME_FORMAT, INTERVAL } from './resources/time';
+import {ARG_SEP, Command} from '../command';
+import {CommandParam, parseDateTime, parseDuration} from '../commandParam';
+import {ReminderRow, ReminderTable} from '../db/reminder';
+import {Closeable, Initialisable} from '../util';
+import {Veikka} from '../veikka';
+import {DATETIME_FORMAT, INTERVAL} from './resources/time';
 
 const UPDATE_INTERVAL = 29 * INTERVAL.MINUTE;
 const MAX_TIMER_INTERVAL = INTERVAL.HOUR;
@@ -180,5 +180,5 @@ const msgParam: CommandParam<string> = {
     },
 };
 
-export { ReminderCommand };
+export {ReminderCommand};
 

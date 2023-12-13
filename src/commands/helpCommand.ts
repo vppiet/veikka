@@ -1,8 +1,8 @@
-import { PrivMsgEvent } from '../types/irc-framework';
+import {PrivMsgEvent} from 'irc-framework';
 
-import { Command, PRIVILEGE_LEVEL } from '../command';
-import { CommandParam } from '../commandParam';
-import { Veikka } from '../veikka';
+import {Command, PRIVILEGE_LEVEL} from '../command';
+import {CommandParam} from '../commandParam';
+import {Veikka} from '../veikka';
 
 class HelpCommand extends Command<string> {
     constructor() {
@@ -48,5 +48,5 @@ const cmdParam: CommandParam<string> = {
     },
 };
 
-export { HelpCommand };
+export {HelpCommand};
 

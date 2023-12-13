@@ -1,9 +1,9 @@
-import { generateHeapSnapshot } from 'bun';
-import { heapStats } from 'bun:jsc';
-import { PrivMsgEvent } from '../types/irc-framework';
+import {generateHeapSnapshot} from 'bun';
+import {heapStats} from 'bun:jsc';
+import {PrivMsgEvent} from 'irc-framework';
 
-import { Command, PRIVILEGE_LEVEL } from '../command';
-import { CommandParam } from '../commandParam';
+import {Command, PRIVILEGE_LEVEL} from '../command';
+import {CommandParam} from '../commandParam';
 
 class DebugCommand extends Command<string> {
     constructor() {
@@ -35,5 +35,5 @@ const operationParam: CommandParam<string> = {
     },
 };
 
-export { DebugCommand };
+export {DebugCommand};
 
