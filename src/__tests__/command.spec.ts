@@ -5,10 +5,10 @@ import {CommandParam} from '../commandParam';
 
 const testParam: CommandParam<string> = {
     required: true,
-    parse: function () {
-        throw new Error('Function not implemented.');
-    }
-}
+    parse: (parts: string[]) => {
+        return {value: parts[0], consumed: parts};
+    },
+};
 
 class TestCommand extends Command<string> {
     constructor() {

@@ -12,8 +12,10 @@ import {fi} from 'date-fns/locale';
 import {PrivMsgEvent} from 'irc-framework';
 
 import Database from 'bun:sqlite';
-import {ARG_SEP, Command} from '../command';
-import {CommandParam, parseDateTime, parseDuration} from '../commandParam';
+import {Command} from '../command';
+import {CommandParam} from '../commandParam';
+import {parseDateTime, parseDuration} from '../commandParamParsers/dateParam';
+import {parseStringTail} from '../commandParamParsers/stringParam';
 import {ReminderRow, ReminderTable} from '../db/reminder';
 import {Closeable, Initialisable} from '../util';
 import {Veikka} from '../veikka';
@@ -141,23 +143,20 @@ class ReminderCommand extends Command<Date | string> implements Initialisable, C
 }
 
 const datetimeParam: CommandParam<Date> = {
+    name: 'aikamääre',
     required: true,
     parse: function(parts: string[]) {
-        if (!parts.length) {
-            return {error: 'Aikamääre puuttuu'};
-        }
-
         const now = new Date();
 
         // timestamp & daydelta
         const datetime = parseDateTime(parts, now);
-        if (datetime.value) {
+        if ('value' in datetime) {
             return {value: datetime.value, consumed: datetime.consumed};
         }
 
         // duration
         const duration = parseDuration(parts);
-        if (duration.value) {
+        if ('value' in duration) {
             const reminderDateTime = add(now, duration.value);
 
             return {value: reminderDateTime, consumed: duration.consumed};
@@ -168,17 +167,9 @@ const datetimeParam: CommandParam<Date> = {
 };
 
 const msgParam: CommandParam<string> = {
-    required: false,
-    parse: function(parts: string[]) {
-        const msg = parts.join(ARG_SEP);
-
-        if (!msg.length) {
-            return {error: 'Viesti puuttuu'};
-        }
-
-        return {value: msg, consumed: parts};
-    },
+    name: 'viesti',
+    required: true,
+    parse: parseStringTail,
 };
 
 export {ReminderCommand};
-

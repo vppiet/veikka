@@ -96,20 +96,25 @@ abstract class Command<P> implements EventListener {
     }
 
     parseArguments(msgParts: string[]): {args: P[]} | {error: string} {
+        // TODO: generic P to support tuples and optional arguments
         const args: P[] = [];
 
-        if (this.params.length === 0) {
+        if (!this.params.length) {
             return {args};
         }
 
         let parts = msgParts;
 
         for (const param of this.params) {
+            if (param.required && !parts.length) {
+                return {error: `Tarvittava argumentti (${param.name}) puuttuu`};
+            }
+
             const result = param.parse(parts);
 
             if ('error' in result) {
                 if (param.required) {
-                    return {error: result.error};
+                    return {error: `Tarvittavaa argumenttia (${param.name}) ei voitu tulkita`};
                 } else {
                     return {args};
                 }
@@ -128,4 +133,3 @@ abstract class Command<P> implements EventListener {
 }
 
 export {ARG_SEP, Command, PRIVILEGE_LEVEL};
-

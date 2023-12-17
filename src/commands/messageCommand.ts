@@ -1,7 +1,8 @@
 import {PrivMsgEvent} from 'irc-framework';
 
-import {ARG_SEP, Command, PRIVILEGE_LEVEL} from '../command';
+import {Command, PRIVILEGE_LEVEL} from '../command';
 import {CommandParam} from '../commandParam';
+import {parseStringHead, parseStringTail} from '../commandParamParsers/stringParam';
 import {Veikka} from '../veikka';
 
 class MessageCommand extends Command<string> {
@@ -27,26 +28,15 @@ class MessageCommand extends Command<string> {
 }
 
 const targetParam: CommandParam<string> = {
+    name: 'kohde',
     required: true,
-    parse: function(parts: string[]) {
-        if (!parts[0]) {
-            return {error: 'Kohde (kanava tai käyttäjä) puuttuu'};
-        }
-
-        return {value: parts[0], consumed: [parts[0]]};
-    },
+    parse: (parts: string[]) => parseStringHead(parts, 1),
 };
 
 const msgParam: CommandParam<string> = {
+    name: 'viesti',
     required: true,
-    parse: function(parts: string[]) {
-        if (!parts[0]) {
-            return {error: 'Viesti puuttuu'};
-        }
-
-        return {value: parts.join(ARG_SEP), consumed: [parts[0]]};
-    },
+    parse: parseStringTail,
 };
 
 export {MessageCommand};
-

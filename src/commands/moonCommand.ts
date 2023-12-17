@@ -3,7 +3,8 @@ import {PrivMsgEvent} from 'irc-framework';
 import {round} from 'lodash';
 
 import {Command} from '../command';
-import {CommandParam, parseDateTime} from '../commandParam';
+import {CommandParam} from '../commandParam';
+import {parseDateTime} from '../commandParamParsers/dateParam';
 import {getMoonIllumination} from './resources/moon';
 import {DATETIME_FORMAT} from './resources/time';
 
@@ -28,11 +29,9 @@ class MoonCommand extends Command<Date> {
 }
 
 const dateTimeParam: CommandParam<Date> = {
+    name: 'aikamääre',
     required: false,
-    parse: function(parts: string[]) {
-        return parseDateTime(parts, new Date());
-    },
+    parse: parseDateTime,
 };
 
 export {MoonCommand};
-

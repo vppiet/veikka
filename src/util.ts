@@ -81,9 +81,16 @@ function objectKeys<T extends object>(obj: T): (keyof T)[] {
     return Object.keys(obj) as (keyof T)[];
 }
 
+function assertObject<T extends object>(obj: object, prop: string): asserts obj is T {
+    if (!(prop in obj)) {
+        throw new Error('Assertion failed:' +
+        ` ${JSON.stringify(obj)} does not have "${prop}" property`);
+    }
+}
+
 export {
     Closeable, Context,
-    Initialisable, PropertyValue, capitalize,
+    Initialisable, PropertyValue, assertObject, capitalize,
     finalizeAll, getCacheDir, isAdmin, isEventType,
     isNumber, isType, objectKeys, peek, useParsedEvents
 };

@@ -23,7 +23,7 @@ class CalculateCommand extends Command<string | number> {
         if (error) {
             this.reply(event, error);
         } else if (result) {
-            const rounded = round(result, decimalPlaces || 2);
+            const rounded = round(result, decimalPlaces ?? 2);
             this.reply(event,
                 `${expression} = ${String(result) === String(rounded) ?
                     result :
@@ -33,6 +33,7 @@ class CalculateCommand extends Command<string | number> {
 }
 
 const expressionParam: CommandParam<string> = {
+    name: 'lauseke',
     required: true,
     parse: function(parts: string[]) {
         let exp = '';
@@ -54,6 +55,7 @@ const expressionParam: CommandParam<string> = {
 };
 
 const decimalParam: CommandParam<number> = {
+    name: 'desimaalit',
     required: false,
     parse: function(parts: string[]) {
         if (parts.length > 0 && parts[0].startsWith('.')) {
@@ -68,4 +70,3 @@ const decimalParam: CommandParam<number> = {
 };
 
 export {CalculateCommand};
-

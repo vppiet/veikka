@@ -4,6 +4,7 @@ import {PrivMsgEvent} from 'irc-framework';
 
 import {Command, PRIVILEGE_LEVEL} from '../command';
 import {CommandParam} from '../commandParam';
+import {parseStringHead} from '../commandParamParsers/stringParam';
 
 class DebugCommand extends Command<string> {
     constructor() {
@@ -29,11 +30,9 @@ class DebugCommand extends Command<string> {
 }
 
 const operationParam: CommandParam<string> = {
+    name: 'toiminto',
     required: false,
-    parse: function(parts: string[]) {
-        return {value: parts[0], consumed: [parts[0]]};
-    },
+    parse: (parts: string[]) => parseStringHead(parts, 1),
 };
 
 export {DebugCommand};
-

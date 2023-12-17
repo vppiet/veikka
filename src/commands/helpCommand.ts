@@ -2,6 +2,7 @@ import {PrivMsgEvent} from 'irc-framework';
 
 import {Command, PRIVILEGE_LEVEL} from '../command';
 import {CommandParam} from '../commandParam';
+import {parseStringHead} from '../commandParamParsers/stringParam';
 import {Veikka} from '../veikka';
 
 class HelpCommand extends Command<string> {
@@ -42,11 +43,9 @@ class HelpCommand extends Command<string> {
 }
 
 const cmdParam: CommandParam<string> = {
+    name: 'komento',
     required: false,
-    parse: function(parts: string[]) {
-        return {value: parts[0], consumed: [parts[0]]};
-    },
+    parse: (parts: string[]) => parseStringHead(parts, 1),
 };
 
 export {HelpCommand};
-

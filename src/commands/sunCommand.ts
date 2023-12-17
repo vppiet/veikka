@@ -8,13 +8,6 @@ import {DATE_FORMAT} from './resources/time';
 const UP_ARROW = '\u2191';
 const DOWN_ARROW = '\u2193';
 
-const DAY_DELTAS: Readonly<Record<string, number>> = {
-    'eilen': -1,
-    'tänään': 0,
-    'huomenna': 1,
-    'ylihuomenna': 2,
-};
-
 class SunCommand extends Command {
     constructor() {
         super('.', 'aurinko', [
