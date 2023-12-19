@@ -29,7 +29,8 @@ const quakenetHandler = {
 
         if (event.ident === 'TheQBot' && event.hostname === 'CServe.quakenet.org') {
             if (event.message.startsWith('You are now logged in as ')) {
-                client.once('displayed host', listener.displayedHostListener);
+                client.once('displayed host', listener.displayedHostListener,
+                    {client, listener: this});
                 client.mode(client.user.nick, '+x');
             } else {
                 client.emit('network services');
