@@ -4,7 +4,7 @@ import {ARG_SEP, Command, PRIVILEGE_LEVEL} from '../command';
 import {CommandParam} from '../commandParam';
 import {Veikka} from '../veikka';
 
-class QuitCommand extends Command<string> {
+class QuitCommand extends Command<[string]> {
     constructor() {
         super('.', 'sulje', [
             '.sulje [viesti]',
@@ -28,6 +28,7 @@ class QuitCommand extends Command<string> {
 }
 
 const quitMsgParam: CommandParam<string> = {
+    name: 'viesti',
     required: false,
     parse: function(parts: string[]) {
         const quitMsg = parts.join(ARG_SEP);
@@ -35,9 +36,8 @@ const quitMsgParam: CommandParam<string> = {
             return {value: quitMsg, consumed: parts};
         }
 
-        return {error: 'Quit-viesti puuttuu.'};
+        return {error: 'Missing quit message'};
     },
-};
+} as const;
 
 export {QuitCommand};
-

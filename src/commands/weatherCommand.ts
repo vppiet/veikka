@@ -2,15 +2,16 @@ import {fromUnixTime} from 'date-fns';
 import {format} from 'date-fns-tz';
 import {PrivMsgEvent} from 'irc-framework';
 
-import {ARG_SEP, Command} from '../command';
+import {Command} from '../command';
 import {CommandParam} from '../commandParam';
+import {parseStringTail} from '../commandParamParsers/stringParam';
 import {
     ApiError, BASE_URL,
     CurrentWeather,
     KPH_TO_MPS_MULTIPLIER, LOCATION_NOT_FOUND_ERROR
 } from './resources/weatherApi';
 
-class CurrentWeatherCommand extends Command<string> {
+class CurrentWeatherCommand extends Command<[string]> {
     constructor() {
         super('.', 'sää', [
             '.sää <paikkakunta>',
@@ -69,17 +70,9 @@ class CurrentWeatherCommand extends Command<string> {
 }
 
 const locationParam: CommandParam<string> = {
+    name: 'paikka',
     required: true,
-    parse: function(parts: string[]) {
-        const location = parts.join(ARG_SEP);
-
-        if (location) {
-            return {value: location, consumed: parts};
-        }
-
-        return {error: 'Paikkakunta puuttuu'};
-    },
-};
+    parse: parseStringTail,
+} as const;
 
 export {CurrentWeatherCommand};
-

@@ -1,7 +1,7 @@
 import {ARG_SEP} from "../command";
 import {ParserFn} from "../commandParam";
 
-const parseStringHead: ParserFn<string, number> = (parts: string[], count: number) => {
+const parseStringHead: ParserFn<string, [number]> = (parts: string[], count: number) => {
     const headParts = parts.slice(0, count);
     return {value: headParts.join(ARG_SEP), consumed: headParts};
 }

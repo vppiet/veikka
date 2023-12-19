@@ -15,16 +15,20 @@ const PRIVILEGE_LEVEL = {
 
 const ARG_SEP = ' ';
 
-abstract class Command<P> implements EventListener {
+type MappedCommandParam<T> = {[K in keyof T]: CommandParam<Exclude<T[K], undefined>>};
+type Union<T extends unknown[]> = T[number];
+
+abstract class Command<P extends unknown[] = never[]> implements EventListener {
     eventName = 'privmsg';
     prefix: string;
     name: string;
     help: string[];
-    params: CommandParam<P>[];
+    params: MappedCommandParam<P>;
     privilegeLevel: PropertyValue<typeof PRIVILEGE_LEVEL>;
     logger: Logger;
 
-    constructor(prefix: string, name: string, help: string[], params: CommandParam<P>[] = [],
+    constructor(prefix: string, name: string, help: string[],
+        params: MappedCommandParam<P>,
         privilegeLevel: PropertyValue<typeof PRIVILEGE_LEVEL> = PRIVILEGE_LEVEL.USER) {
         this.prefix = prefix;
         this.name = name;
@@ -68,6 +72,8 @@ abstract class Command<P> implements EventListener {
         if ('error' in argsParseResult) {
             cmd.reply(event, argsParseResult.error);
         } else if ('args' in argsParseResult) {
+            /* TYPING ISSUE: do we have a fundamental design issue here?
+            The shuffling between arrays and tuples */
             cmd.eventHandler(event, argsParseResult.args, client);
         }
     }
@@ -89,21 +95,18 @@ abstract class Command<P> implements EventListener {
         return true;
     }
 
-    abstract eventHandler(event: PrivMsgEvent, args: P[], client: Veikka): void;
+    abstract eventHandler(event: PrivMsgEvent, args: P, client: Veikka): void;
 
     createSay(...input: string[]) {
         return input.join(' | ');
     }
 
-    parseArguments(msgParts: string[]): {args: P[]} | {error: string} {
-        // TODO: generic P to support tuples and optional arguments
-        const args: P[] = [];
+    parseArguments(parts: string[]): {args: Union<P>[]} | {error: string} {
+        const args: Union<P>[] = [];
 
         if (!this.params.length) {
             return {args};
         }
-
-        let parts = msgParts;
 
         for (const param of this.params) {
             if (param.required && !parts.length) {

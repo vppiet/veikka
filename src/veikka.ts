@@ -14,7 +14,7 @@ import {Closeable, Initialisable, isType} from './util';
 class Veikka extends Client {
     logger: Logger;
     db: Database;
-    commands: Command<unknown>[] = [];
+    commands: Command<unknown[]>[] = [];
     channels: Channel[] = [];
     services: Service[] = [];
 
@@ -35,7 +35,7 @@ class Veikka extends Client {
         return new Veikka(db, options);
     }
 
-    addCommand<T>(...cmds: Command<T>[]) {
+    addCommand<T extends unknown[]>(...cmds: Command<T>[]) {
         cmds.forEach((c) => {
             this.addListener(c.eventName, c.listener, {client: this, listener: c});
 
@@ -84,7 +84,7 @@ class Veikka extends Client {
             this.logger.info(`Socket closed`);
             this.channels = [];
             this.commands
-                .filter((c): c is Command<unknown> & Closeable => isType(c, ['close']))
+                .filter((c): c is Command<unknown[]> & Closeable => isType(c, ['close']))
                 .forEach((c) => { c.close(this); });
         });
     }

@@ -6,7 +6,7 @@ import {Command, PRIVILEGE_LEVEL} from '../command';
 import {CommandParam} from '../commandParam';
 import {parseStringHead} from '../commandParamParsers/stringParam';
 
-class DebugCommand extends Command<string> {
+class DebugCommand extends Command<[string | undefined]> {
     constructor() {
         super('.', 'debug', [
             '.debug [toiminto]',
@@ -14,7 +14,7 @@ class DebugCommand extends Command<string> {
         ], [operationParam], PRIVILEGE_LEVEL.ADMIN);
     }
 
-    async eventHandler(event: PrivMsgEvent, args: [string]) {
+    async eventHandler(event: PrivMsgEvent, args: [string | undefined]) {
         const [operation] = args;
 
         if (operation === 'snapshot') {
@@ -33,6 +33,6 @@ const operationParam: CommandParam<string> = {
     name: 'toiminto',
     required: false,
     parse: (parts: string[]) => parseStringHead(parts, 1),
-};
+} as const;
 
 export {DebugCommand};

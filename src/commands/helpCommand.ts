@@ -5,7 +5,7 @@ import {CommandParam} from '../commandParam';
 import {parseStringHead} from '../commandParamParsers/stringParam';
 import {Veikka} from '../veikka';
 
-class HelpCommand extends Command<string> {
+class HelpCommand extends Command<[string | undefined]> {
     constructor() {
         super('.', 'ohje', [
             '.ohje [komento]',
@@ -46,6 +46,6 @@ const cmdParam: CommandParam<string> = {
     name: 'komento',
     required: false,
     parse: (parts: string[]) => parseStringHead(parts, 1),
-};
+} as const;
 
 export {HelpCommand};

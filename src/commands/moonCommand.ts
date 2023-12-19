@@ -4,11 +4,11 @@ import {round} from 'lodash';
 
 import {Command} from '../command';
 import {CommandParam} from '../commandParam';
-import {parseDateTime} from '../commandParamParsers/dateParam';
+import {parseDateTimeOrDayDelta} from '../commandParamParsers/dateParam';
 import {getMoonIllumination} from './resources/moon';
 import {DATETIME_FORMAT} from './resources/time';
 
-class MoonCommand extends Command<Date> {
+class MoonCommand extends Command<[Date | undefined]> {
     constructor() {
         super('.', 'kuu', [
             '.kuu [aikamääre]',
@@ -18,7 +18,7 @@ class MoonCommand extends Command<Date> {
         ], [dateTimeParam]);
     }
 
-    eventHandler(event: PrivMsgEvent, params: [Date]) {
+    eventHandler(event: PrivMsgEvent, params: [Date | undefined]) {
         const date = params[0] ?? new Date();
 
         const ill = getMoonIllumination(date);
@@ -31,7 +31,10 @@ class MoonCommand extends Command<Date> {
 const dateTimeParam: CommandParam<Date> = {
     name: 'aikamääre',
     required: false,
-    parse: parseDateTime,
-};
+    parse: (parts: string[]) => {
+        const now = new Date();
+        return parseDateTimeOrDayDelta(parts, now);
+    },
+} as const;
 
 export {MoonCommand};

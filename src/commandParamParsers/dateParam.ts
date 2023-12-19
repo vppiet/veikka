@@ -62,8 +62,7 @@ const DATETIME_FORMATS: readonly {regex: RegExp, strings: string[]}[] = [
     },
 ];
 
-const parseDateTime: ParserFn<Date> = (parts: string[]) => {
-    const now = new Date();
+const parseDateTime: ParserFn<Date, [Date]> = (parts: string[], referenceDate: Date) => {
     const firstPart = parts[0];
 
     for (const FORMAT of DATETIME_FORMATS) {
@@ -73,7 +72,7 @@ const parseDateTime: ParserFn<Date> = (parts: string[]) => {
                 const partCount = strFormat.split(ARG_SEP).length;
                 const dateParts = parts.slice(0, partCount);
                 const dateString = dateParts.join(ARG_SEP);
-                const result = parse(dateString, strFormat, now);
+                const result = parse(dateString, strFormat, referenceDate);
 
                 if (isValid(result.getTime())) {
                     return {value: result, consumed: dateParts};
@@ -100,12 +99,12 @@ const DAY_DELTAS: Readonly<Record<string, number>> = {
     'ylihuomenna': 2,
 };
 
-const parseDayDelta: ParserFn<Date> = (parts: string[]) => {
+const parseDayDelta: ParserFn<Date, [Date]> = (parts: string[], referenceDate: Date) => {
     const deltaName = parts[0];
 
     if (deltaName in DAY_DELTAS) {
         const deltaValue = DAY_DELTAS[deltaName];
-        const date = addDays(new Date(), deltaValue);
+        const date = addDays(referenceDate, deltaValue);
 
         return {value: date, consumed: [parts[0]]};
     }
@@ -115,11 +114,11 @@ const parseDayDelta: ParserFn<Date> = (parts: string[]) => {
 
 const TIME_24H_FORMATS = ['H:mm', '\'klo\' H:mm'];
 
-const parseTime: ParserFn<Date> = (parts: string[]) => {
+const parseTime: ParserFn<Date, [Date]> = (parts: string[], referenceDate: Date) => {
     for (const FORMAT of TIME_24H_FORMATS) {
         const timeParts = parts.slice(0, FORMAT.split(ARG_SEP).length);
         const timeString = timeParts.join(ARG_SEP);
-        const date = parse(timeString, FORMAT, new Date());
+        const date = parse(timeString, FORMAT, referenceDate);
 
         if (isValid(date)) {
             return {value: date, consumed: timeParts};
@@ -128,12 +127,11 @@ const parseTime: ParserFn<Date> = (parts: string[]) => {
 
     return {error: 'Could not parse time'};
 };
-// huomenna klo 10 mene lääkäriin
-// eilen 3
-const parseDayDeltaWithTime: ParserFn<Date> = (parts: string[]) => {
+
+const parseDayDeltaWithTime: ParserFn<Date, [Date]> = (parts: string[], referenceDate: Date) => {
     const consumed = [];
 
-    const dayDeltaResult = parseDayDelta(parts);
+    const dayDeltaResult = parseDayDelta(parts, referenceDate);
 
     if ('error' in dayDeltaResult) {
         return {error: dayDeltaResult.error};
@@ -144,7 +142,7 @@ const parseDayDeltaWithTime: ParserFn<Date> = (parts: string[]) => {
 
     const timeParts = parts.slice(dayDeltaResult.consumed.length);
     if (timeParts.length) {
-        const timeResult = parseTime(timeParts);
+        const timeResult = parseTime(timeParts, date);
 
         if ('value' in timeResult && isValid(timeResult.value)) {
             // ignore parse error
@@ -153,7 +151,7 @@ const parseDayDeltaWithTime: ParserFn<Date> = (parts: string[]) => {
             const time = timeResult.value;
             date.setHours(time.getHours());
             date.setMinutes(time.getMinutes());
-    
+
             return {value: date, consumed};
         }
     }
@@ -161,4 +159,25 @@ const parseDayDeltaWithTime: ParserFn<Date> = (parts: string[]) => {
     return {value: date, consumed};
 }
 
-export {parseDateTime, parseDayDelta, parseDayDeltaWithTime, parseDuration, parseTime};
+const parseDateTimeOrDayDelta: ParserFn<Date, [Date]> = (parts: string[], referenceDate: Date) => {
+    const dayDeltaResult = parseDayDeltaWithTime(parts, referenceDate);
+    if ('value' in dayDeltaResult) {
+        return dayDeltaResult;
+    }
+
+    const dateTimeResult = parseDateTime(parts, referenceDate);
+    if ('value' in dateTimeResult) {
+        return dateTimeResult;
+    }
+
+    return {error: 'Could not parse day delta or date time'};
+}
+
+export {
+    parseDateTime,
+    parseDateTimeOrDayDelta,
+    parseDayDelta,
+    parseDayDeltaWithTime,
+    parseDuration,
+    parseTime
+};

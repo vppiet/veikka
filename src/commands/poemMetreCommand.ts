@@ -7,7 +7,7 @@ import {NounTable} from '../db/noun';
 import {Closeable, Initialisable} from '../util';
 import {Syllabificator} from './resources/textAnalysis';
 
-class PoemMetreCommand extends Command<string> implements Initialisable, Closeable {
+class PoemMetreCommand extends Command<[string]> implements Initialisable, Closeable {
     nounTable: NounTable;
     syllabificator: Syllabificator;
 
@@ -48,6 +48,7 @@ class PoemMetreCommand extends Command<string> implements Initialisable, Closeab
 }
 
 const poemParam: CommandParam<string> = {
+    name: 'runo',
     required: true,
     parse: function(parts: string[]) {
         const poem = parts.join(ARG_SEP);
@@ -58,7 +59,6 @@ const poemParam: CommandParam<string> = {
 
         return {value: poem, consumed: parts};
     },
-};
+} as const;
 
 export {PoemMetreCommand};
-

@@ -1,14 +1,14 @@
-import {describe, test, expect, beforeAll, mock, jest} from 'bun:test';
 import {Database} from 'bun:sqlite';
+import {beforeAll, describe, expect, jest, mock, test} from 'bun:test';
 
 import {NounTable} from '../../../db/noun';
 import {Syllabificator} from '../textAnalysis';
 
-mock.module('bun:sqlite', () => {
+await mock.module('bun:sqlite', () => {
     return {Database: jest.fn()};
 });
 
-mock.module('../../../db/noun.ts', () => {
+await mock.module('../../../db/noun.ts', () => {
     return {
         NounTable: jest.fn(() => {
             return {

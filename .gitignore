@@ -6,3 +6,4 @@ logs/
 .vscode/
 db.*
 cache/
+src/playground.ts

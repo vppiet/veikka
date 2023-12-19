@@ -5,7 +5,7 @@ import {CommandParam} from '../commandParam';
 import {parseStringHead, parseStringTail} from '../commandParamParsers/stringParam';
 import {Veikka} from '../veikka';
 
-class MessageCommand extends Command<string> {
+class MessageCommand extends Command<[string, string]> {
     constructor() {
         super('.', 'viesti', [
             '.viesti <kohde> <viesti>',
@@ -31,12 +31,12 @@ const targetParam: CommandParam<string> = {
     name: 'kohde',
     required: true,
     parse: (parts: string[]) => parseStringHead(parts, 1),
-};
+} as const;
 
 const msgParam: CommandParam<string> = {
     name: 'viesti',
     required: true,
     parse: parseStringTail,
-};
+} as const;
 
 export {MessageCommand};

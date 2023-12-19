@@ -14,7 +14,7 @@ import {PrivMsgEvent} from 'irc-framework';
 import Database from 'bun:sqlite';
 import {Command} from '../command';
 import {CommandParam} from '../commandParam';
-import {parseDateTime, parseDuration} from '../commandParamParsers/dateParam';
+import {parseDateTimeOrDayDelta, parseDuration} from '../commandParamParsers/dateParam';
 import {parseStringTail} from '../commandParamParsers/stringParam';
 import {ReminderRow, ReminderTable} from '../db/reminder';
 import {Closeable, Initialisable} from '../util';
@@ -29,7 +29,8 @@ interface ReminderTimer {
     timer: Timer;
 }
 
-class ReminderCommand extends Command<Date | string> implements Initialisable, Closeable {
+class ReminderCommand extends Command<[Date, string | undefined]>
+    implements Initialisable, Closeable {
     timers: ReminderTimer[] = [];
     table: ReminderTable;
     updater?: Timer;
@@ -62,7 +63,7 @@ class ReminderCommand extends Command<Date | string> implements Initialisable, C
         this.updater = setInterval(updateHandler, UPDATE_INTERVAL);
     }
 
-    eventHandler(event: PrivMsgEvent, params: [Date, string], client: Veikka): void {
+    eventHandler(event: PrivMsgEvent, params: [Date, string | undefined], client: Veikka): void {
         const [reminderDate, reminderMsg] = params;
 
         if (isPast(reminderDate)) {
@@ -100,13 +101,15 @@ class ReminderCommand extends Command<Date | string> implements Initialisable, C
     addTimer(client: Veikka, row: ReminderRow) {
         const handler = () => {
             const msg = row.reminder_text ? `"${row.reminder_text}"` : 'Ei viestiä';
+            const dateString = format(
+                utcToZonedTime(row.created_at * 1000, row.reminder_tz),
+                DATETIME_FORMAT,
+            );
+
             client.say(row.target, this.createSay(
                 msg,
                 `Luonut ${row.nick}`,
-                `${format(
-                    utcToZonedTime(row.created_at * 1000, row.reminder_tz),
-                    DATETIME_FORMAT,
-                )}`,
+                dateString,
             ));
 
             this.table.deleteOne.run({$id: row.id});
@@ -147,11 +150,14 @@ const datetimeParam: CommandParam<Date> = {
     required: true,
     parse: function(parts: string[]) {
         const now = new Date();
+        const zeroSecNow = new Date(now);
+        zeroSecNow.setSeconds(0);
+        zeroSecNow.setMilliseconds(0);
 
-        // timestamp & daydelta
-        const datetime = parseDateTime(parts, now);
-        if ('value' in datetime) {
-            return {value: datetime.value, consumed: datetime.consumed};
+        // datetime & daydelta
+        const datetimeResult = parseDateTimeOrDayDelta(parts, zeroSecNow);
+        if ('value' in datetimeResult) {
+            return datetimeResult;
         }
 
         // duration
@@ -164,12 +170,12 @@ const datetimeParam: CommandParam<Date> = {
 
         return {error: 'Aikamäärettä ei voitu tulkita'};
     },
-};
+} as const;
 
 const msgParam: CommandParam<string> = {
     name: 'viesti',
-    required: true,
+    required: false,
     parse: parseStringTail,
-};
+} as const;
 
 export {ReminderCommand};

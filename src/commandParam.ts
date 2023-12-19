@@ -4,7 +4,8 @@ interface CommandParam<T> {
     parse: ParserFn<T>;
 }
 
-type ParserFn<T, U = unknown> = (parts: string[], ...args: U[]) => ParamParseResult<T>;
+type ParserFn<T, U extends unknown[] = never[]> =
+    (parts: string[], ...args: U) => ParamParseResult<T>;
 
 type ParamParseResult<T> = ParamParseSuccess<T> | ParamParseError;
 

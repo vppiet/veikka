@@ -8,10 +8,12 @@ import {
 } from '../dateParam';
 
 const timeZoneBefore = process.env.TZ;
+let referenceDate: Date;
 
 beforeAll(() => {
     process.env.TZ = 'Europe/Helsinki';
     setSystemTime(new Date('2023-12-17T00:00:00.000Z'));
+    referenceDate = new Date();
 });
 
 afterAll(() => {
@@ -20,7 +22,7 @@ afterAll(() => {
 
 describe('dateParam', () => {
     test('datetime, "d.M. klo H:mm"', () => {
-        const result = parseDateTime(['15.12.', 'klo', '12:33']);
+        const result = parseDateTime(['15.12.', 'klo', '12:33'], referenceDate);
         assertObject<ParamParseSuccess<Date>>(result, 'value');
 
         expect(result.value.toISOString()).toBe('2023-12-15T10:33:00.000Z');
@@ -28,7 +30,7 @@ describe('dateParam', () => {
     });
 
     test('datetime, "d.M. klo H"', () => {
-        const result = parseDateTime(['15.12.', 'klo', '12']);
+        const result = parseDateTime(['15.12.', 'klo', '12'], referenceDate);
         assertObject<ParamParseSuccess<Date>>(result, 'value');
 
         expect(result.value.toISOString()).toBe('2023-12-15T10:00:00.000Z');
@@ -36,7 +38,7 @@ describe('dateParam', () => {
     });
 
     test('datetime, "d.M. H:mm"', () => {
-        const result = parseDateTime(['15.12.', '4:20']);
+        const result = parseDateTime(['15.12.', '4:20'], referenceDate);
         assertObject<ParamParseSuccess<Date>>(result, 'value');
 
         expect(result.value.toISOString()).toBe('2023-12-15T02:20:00.000Z');
@@ -44,7 +46,7 @@ describe('dateParam', () => {
     });
 
     test('datetime, "d.M."', () => {
-        const result = parseDateTime(['1.1.']);
+        const result = parseDateTime(['1.1.'], referenceDate);
         assertObject<ParamParseSuccess<Date>>(result, 'value');
 
         expect(result.value.toISOString()).toBe('2022-12-31T22:00:00.000Z');
@@ -52,7 +54,7 @@ describe('dateParam', () => {
     });
 
     test('datetime, "d.M.yyyy klo H:mm"', () => {
-        const result = parseDateTime(['31.12.2023', 'klo', '12:04']);
+        const result = parseDateTime(['31.12.2023', 'klo', '12:04'], referenceDate);
         assertObject<ParamParseSuccess<Date>>(result, 'value');
 
         expect(result.value.toISOString()).toBe('2023-12-31T10:04:00.000Z');
@@ -60,7 +62,7 @@ describe('dateParam', () => {
     });
 
     test('datetime, "d.M.yyyy H:mm"', () => {
-        const result = parseDateTime(['31.12.2023', '12:04']);
+        const result = parseDateTime(['31.12.2023', '12:04'], referenceDate);
         assertObject<ParamParseSuccess<Date>>(result, 'value');
 
         expect(result.value.toISOString()).toBe('2023-12-31T10:04:00.000Z');
@@ -68,7 +70,7 @@ describe('dateParam', () => {
     });
 
     test('datetime, "d.M.yyyy klo H"', () => {
-        const result = parseDateTime(['31.12.2023']);
+        const result = parseDateTime(['31.12.2023'], referenceDate);
         assertObject<ParamParseSuccess<Date>>(result, 'value');
 
         expect(result.value.toISOString()).toBe('2023-12-30T22:00:00.000Z');
@@ -76,7 +78,7 @@ describe('dateParam', () => {
     });
 
     test('datetime, "d.M.yyyy"', () => {
-        const result = parseDateTime(['31.12.2023']);
+        const result = parseDateTime(['31.12.2023'], referenceDate);
         assertObject<ParamParseSuccess<Date>>(result, 'value');
 
         expect(result.value.toISOString()).toBe('2023-12-30T22:00:00.000Z');
@@ -108,7 +110,7 @@ describe('dateParam', () => {
     });
 
     test('time, "H:m"', () => {
-        const result = parseTime(['10:20']);
+        const result = parseTime(['10:20'], referenceDate);
         assertObject<ParamParseSuccess<Date>>(result, 'value');
 
         expect(result.value.getHours()).toEqual(10);
@@ -117,7 +119,7 @@ describe('dateParam', () => {
     });
 
     test('time, "klo H:m"', () => {
-        const result = parseTime(['klo', '10:20']);
+        const result = parseTime(['klo', '10:20'], referenceDate);
         assertObject<ParamParseSuccess<Date>>(result, 'value');
 
         expect(result.value.getHours()).toEqual(10);
@@ -126,7 +128,7 @@ describe('dateParam', () => {
     });
 
     test('day delta', () => {
-        const result = parseDayDelta(['huomenna']);
+        const result = parseDayDelta(['huomenna'], referenceDate);
         assertObject<ParamParseSuccess<Date>>(result, 'value');
 
         expect(result.value.toISOString()).toStartWith('2023-12-18T00:00');
@@ -134,7 +136,7 @@ describe('dateParam', () => {
     });
 
     test('day delta', () => {
-        const result = parseDayDelta(['eilen']);
+        const result = parseDayDelta(['eilen'], referenceDate);
         assertObject<ParamParseSuccess<Date>>(result, 'value');
 
         expect(result.value.toISOString()).toStartWith('2023-12-16T00:00');
@@ -142,7 +144,7 @@ describe('dateParam', () => {
     });
 
     test('day delta with time', () => {
-        const result = parseDayDeltaWithTime(['huomenna', 'klo', '10:20']);
+        const result = parseDayDeltaWithTime(['huomenna', 'klo', '10:20'], referenceDate);
         assertObject<ParamParseSuccess<Date>>(result, 'value');
 
         expect(result.value.toISOString()).toStartWith('2023-12-18T08:20');
@@ -150,7 +152,7 @@ describe('dateParam', () => {
     });
 
     test('day delta with invalid time', () => {
-        const result = parseDayDeltaWithTime(['huomenna', 'klo', '33:20']);
+        const result = parseDayDeltaWithTime(['huomenna', 'klo', '33:20'], referenceDate);
         assertObject<ParamParseSuccess<Date>>(result, 'value');
 
         expect(result.value.toISOString()).toStartWith('2023-12-18T00:00');

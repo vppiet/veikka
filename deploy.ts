@@ -23,7 +23,6 @@ veikka.addCommand(new HelpCommand())
     .addCommand(new CurrentWeatherCommand())
     .addCommand(new CalculateCommand())
     .addCommand(new PoemMetreCommand(db))
-    // .addCommand(new SunCommand())
     .addCommand(new MoonCommand())
     .addCommand(new DebugCommand())
     .addCommand(new MessageCommand());

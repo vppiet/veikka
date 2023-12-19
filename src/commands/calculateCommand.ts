@@ -5,18 +5,18 @@ import {Command} from '../command';
 import {CommandParam} from '../commandParam';
 import {SUPPORTED_CHARS, SYMBOLS, calculate} from './resources/mathematical';
 
-class CalculateCommand extends Command<string | number> {
+class CalculateCommand extends Command<[string, number | undefined]> {
     constructor() {
-        super('.', 'laske', [
-            '.laske <lauseke> .[desimaalit]',
+        super('.', 'laskin', [
+            '.laskin <lauseke> .[desimaalit]',
             'Laske matemaattinen lauseke.',
-            'Esim: .laske 1.1+2*(3/4)^pi .3',
+            'Esim: .laskin 1.1+2*(3/4)^pi .3',
             `Tuetut kirjaimet: "${SUPPORTED_CHARS}"`,
             `Tuetut symbolit: ${Object.keys(SYMBOLS).map((s) => '"' + s + '"').join(', ')}`,
         ], [expressionParam, decimalParam]);
     }
 
-    eventHandler(event: PrivMsgEvent, args: [string, number]) {
+    eventHandler(event: PrivMsgEvent, args: [string, number | undefined]): void {
         const [expression, decimalPlaces] = args;
         const {error, result} = calculate(expression);
 
@@ -67,6 +67,6 @@ const decimalParam: CommandParam<number> = {
 
         return {error: 'Desimaalit tulisi antaa muodossa ".n" (esim. .laske pi^2 .3)'};
     },
-};
+} as const;
 
 export {CalculateCommand};

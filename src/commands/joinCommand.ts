@@ -4,7 +4,7 @@ import {Command, PRIVILEGE_LEVEL} from '../command';
 import {CommandParam} from '../commandParam';
 import {Veikka} from '../veikka';
 
-class JoinCommand extends Command<string> {
+class JoinCommand extends Command<[string]> {
     constructor() {
         super('.', 'liity', [
             '.liity <kanava>',
@@ -27,6 +27,7 @@ class JoinCommand extends Command<string> {
 }
 
 const channelParam: CommandParam<string> = {
+    name: 'kanava',
     required: true,
     parse: function(parts: string[]) {
         if (!parts[0]) {
@@ -39,7 +40,6 @@ const channelParam: CommandParam<string> = {
 
         return {value: parts[0], consumed: [parts[0]]};
     },
-};
+} as const;
 
 export {JoinCommand};
-

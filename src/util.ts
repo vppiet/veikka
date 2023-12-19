@@ -88,9 +88,12 @@ function assertObject<T extends object>(obj: object, prop: string): asserts obj 
     }
 }
 
+const UP_ARROW = '\u2191';
+const DOWN_ARROW = '\u2193';
+
 export {
-    Closeable, Context,
-    Initialisable, PropertyValue, assertObject, capitalize,
+    Closeable, Context, DOWN_ARROW, Initialisable, PropertyValue, UP_ARROW,
+    assertObject, capitalize,
     finalizeAll, getCacheDir, isAdmin, isEventType,
     isNumber, isType, objectKeys, peek, useParsedEvents
 };
