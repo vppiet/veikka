@@ -16,6 +16,7 @@ module.exports = {
         indent: ['error', 4],
         'max-len': ['error', 100],
         'eol-last': 1,
+        "no-multiple-empty-lines": ['error', {max: 1, maxEOF: 1}],
         '@typescript-eslint/unbound-method': 'off',
     },
 };
