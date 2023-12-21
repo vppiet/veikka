@@ -1,30 +1,37 @@
+import {Body, Illumination, MoonPhase} from 'astronomy-engine';
 import {format} from 'date-fns';
 import {PrivMsgEvent} from 'irc-framework';
-import {round} from 'lodash';
+import round from 'lodash.round';
 
 import {Command} from '../command';
 import {CommandParam} from '../commandParam';
 import {parseDateTimeOrDayDelta} from '../commandParamParsers/dateParam';
-import {getMoonIllumination} from './resources/moon';
+import {parseStringTail} from '../commandParamParsers/stringParam';
 import {DATETIME_FORMAT} from './resources/time';
 
-class MoonCommand extends Command<[Date | undefined]> {
+class MoonCommand extends Command<[Date | undefined, string | undefined]> {
     constructor() {
         super('.', 'kuu', [
             '.kuu [aikamääre]',
-            'Näytä tämänhetkinen tai tietyn ajankohdan (15.10.1582 jälkeen)' +
-                ' kuun valaistumisaste prosentteina.',
-            'Esim. ".kuu", ".kuu 2.12.2023 klo 21:13", ".kuu huomenna"',
-        ], [dateTimeParam]);
+        ], [dateTimeParam, locationParam]);
     }
 
-    eventHandler(event: PrivMsgEvent, params: [Date | undefined]) {
-        const date = params[0] ?? new Date();
+    eventHandler(event: PrivMsgEvent, params: [Date | undefined, string | undefined]) {
+        const [dateParam] = params;
+        const date = dateParam ?? new Date();
 
-        const ill = getMoonIllumination(date);
-        const illPercent = round(ill * 100, 1);
+        const phaseString = getMoonPhaseString(date);
 
-        this.reply(event, `${illPercent} % valaistuneena`, format(date, DATETIME_FORMAT));
+        const illumination = getMoonIlluminationPercentage(date);
+        const illString = `${illumination} % valaistuneena`;
+
+        const dateString = format(date, DATETIME_FORMAT);
+
+        this.reply(event,
+            phaseString,
+            illString,
+            dateString,
+        );
     }
 }
 
@@ -36,5 +43,44 @@ const dateTimeParam: CommandParam<Date> = {
         return parseDateTimeOrDayDelta(parts, now);
     },
 } as const;
+
+const locationParam: CommandParam<string> = {
+    name: 'paikkakunta',
+    required: false,
+    parse: parseStringTail,
+} as const;
+
+function getMoonIlluminationPercentage(date: Date) {
+    const {phase_fraction} = Illumination(Body.Moon, date);
+    return round(phase_fraction * 100, 1);
+}
+
+const MOON_PHASES: Readonly<{angle: number, description: string}[]> = [
+    {angle: 0, description: 'Uusi kuu'},
+    {angle: 45, description: 'Kasvava sirppi'},
+    {angle: 90, description: 'Ensimmäinen neljännes'},
+    {angle: 135, description: 'Kasvava kupera kuu'},
+    {angle: 180, description: 'Täysikuu'},
+    {angle: 225, description: 'Vähenevä kupera kuu'},
+    {angle: 270, description: 'Viimeinen neljännes'},
+    {angle: 315, description: 'Vähenevä sirppi'},
+];
+
+function getMoonPhaseString(date: Date) {
+    const currentPhase = MoonPhase(date);
+
+    const mp = MOON_PHASES.find((mp, i) => {
+        console.log(i, mp, currentPhase);
+        if (i === MOON_PHASES.length - 1 && currentPhase >= MOON_PHASES[i].angle) {
+            return true;
+        } else if (currentPhase >= mp.angle && currentPhase < MOON_PHASES[i + 1].angle) {
+            return true;
+        }
+
+        return false;
+    });
+
+    return mp?.description ?? 'Error determining moon phase';
+}
 
 export {MoonCommand};

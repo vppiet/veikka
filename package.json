@@ -17,6 +17,7 @@
   "author": "Ville Pietarinen",
   "license": "MIT",
   "dependencies": {
+    "astronomy-engine": "^2.1.19",
     "date-fns": "^3.0.0",
     "date-fns-tz": "^2.0.0",
     "irc-framework": "^4.13.1",

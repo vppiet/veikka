@@ -1,5 +1,5 @@
 interface CommandParam<T> {
-    name: string,
+    readonly name: string,
     required: boolean;
     parse: ParserFn<T>;
 }

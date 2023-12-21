@@ -43,30 +43,6 @@ interface CurrentWeather {
     };
 }
 
-interface Astro {
-    location: Location;
-    astronomy: {
-        astro: {
-            sunrise: string;
-            sunset: string;
-            moonrise: string;
-            moonset: string;
-            moon_phase: string;
-            moon_illumination: number;
-        }
-    }
-}
-
-const MOON_PHASES_EN_FI: Record<string, string> = {
-    'New Moon': 'Uusi kuu',
-    'Waxing Crescent': 'Kasvava sirppi',
-    'First Quarter': 'Ensimmäinen neljännes',
-    'Waxing Gibbous': 'Kasvava kupera kuu',
-    'Full Moon': 'Täysikuu',
-    'Waning Gibbous': 'Vähenevä kupera kuu',
-    'Last Quarter': 'Viimeinen neljännes',
-    'Waning Crescent': 'Vähenevä sirppi',
-};
 const LOCATION_NOT_FOUND_ERROR = 1006;
 const KPH_TO_MPS_MULTIPLIER = 5/18;
 const BASE_URL = 'https://api.weatherapi.com/v1';
@@ -151,7 +127,6 @@ function pad(value: number) {
 
 export {
     ApiError,
-    Astro,
     BASE_URL,
     CoordinatePoint,
     CoordinateType,
@@ -159,6 +134,5 @@ export {
     CurrentWeather,
     KPH_TO_MPS_MULTIPLIER,
     LOCATION_NOT_FOUND_ERROR,
-    Location,
-    MOON_PHASES_EN_FI
+    Location
 };

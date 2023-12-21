@@ -117,9 +117,14 @@ abstract class Command<P extends unknown[] = never[]> implements EventListener {
 
             if ('error' in result) {
                 if (param.required) {
-                    return {error: `Tarvittavaa argumenttia (${param.name}) ei voitu tulkita`};
+                    // short-circuit when a required argument cannot be parsed
+                    return {error: `Tarvittavaa argumenttia (${param.name}) ei voitu tulkita` +
+                        (result.error ? ` (${result.error})` : '')};
                 } else {
-                    return {args};
+                    /* continue on optional arguments (we might have optional arguments left)
+                        insert undefined as placeholder */
+                    args.push(undefined);
+                    continue;
                 }
             }
 
