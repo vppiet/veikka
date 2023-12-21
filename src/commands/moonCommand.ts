@@ -70,7 +70,6 @@ function getMoonPhaseString(date: Date) {
     const currentPhase = MoonPhase(date);
 
     const mp = MOON_PHASES.find((mp, i) => {
-        console.log(i, mp, currentPhase);
         if (i === MOON_PHASES.length - 1 && currentPhase >= MOON_PHASES[i].angle) {
             return true;
         } else if (currentPhase >= mp.angle && currentPhase < MOON_PHASES[i + 1].angle) {
