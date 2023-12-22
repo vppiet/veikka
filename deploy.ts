@@ -10,12 +10,16 @@ import {ReminderCommand} from './src/commands/reminderCommand';
 import {INTERVAL} from './src/commands/resources/time';
 import {CurrentWeatherCommand} from './src/commands/weatherCommand';
 import {LogMiddleware} from './src/middlewares/logMiddleware';
+import {LocationService} from './src/services/locationService';
 import {Veikka} from './src/veikka';
 
 const veikka = Veikka.create();
 const db = veikka.db;
 
 veikka.use(new LogMiddleware().middleware());
+
+veikka.addService(new LocationService(db));
+
 veikka.addCommand(new HelpCommand())
     .addCommand(new QuitCommand())
     .addCommand(new JoinCommand())

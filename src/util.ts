@@ -3,6 +3,7 @@ import {mkdir} from 'fs/promises';
 import {IrcEvent, MiddlewareHandler} from 'irc-framework';
 import {resolve} from 'path';
 
+import {Service} from './service';
 import {Veikka} from './veikka';
 
 interface Context<L> {
@@ -27,6 +28,10 @@ function isType<T extends object, U extends object>(o: U, props: string[]): o is
 function isEventType<T extends IrcEvent>(actualCmd: string, expectedCmd: string,
     event: IrcEvent): event is T {
     return actualCmd.toLowerCase() === expectedCmd.toLowerCase();
+}
+
+function isServiceType<T extends Service>(s: Service | undefined, id: symbol): s is T {
+    return s !== undefined && s.id === id;
 }
 
 function useParsedEvents(handler: (command: string, event: IrcEvent, client: Veikka,
@@ -95,5 +100,5 @@ export {
     Closeable, Context, DOWN_ARROW, Initialisable, PropertyValue, UP_ARROW,
     assertObject, capitalize,
     finalizeAll, getCacheDir, isAdmin, isEventType,
-    isNumber, isType, objectKeys, peek, useParsedEvents
+    isNumber, isServiceType, isType, objectKeys, peek, useParsedEvents
 };

@@ -47,8 +47,8 @@ const quakenetHandler = {
     }
 }
 
-const networks: Readonly<Record<string, NetworkHandler>> = {
+const NETWORKS: Readonly<Record<string, NetworkHandler>> = {
     'quakenet.org': quakenetHandler,
 };
 
-export default networks;
+export default NETWORKS;

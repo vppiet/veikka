@@ -7,16 +7,16 @@ import {Logger} from 'winston';
 
 import {Command} from './command';
 import {getLogger} from './logger';
-import networks from './networks';
+import NETWORKS from './network';
 import {Service} from './service';
-import {Closeable, Initialisable, isType} from './util';
+import {Closeable, Initialisable, isServiceType, isType} from './util';
 
 class Veikka extends Client {
     logger: Logger;
     db: Database;
     commands: Command<unknown[]>[] = [];
     channels: Channel[] = [];
-    services: Service[] = [];
+    services: Record<symbol, Service | undefined> = {};
 
     private constructor(db: Database, options?: IrcClientOptions) {
         super(options);
@@ -35,18 +35,25 @@ class Veikka extends Client {
         return new Veikka(db, options);
     }
 
-    addCommand<T extends unknown[]>(...cmds: Command<T>[]) {
-        cmds.forEach((c) => {
-            this.addListener(c.eventName, c.listener, {client: this, listener: c});
+    addCommand<T extends unknown[]>(cmd: Command<T>) {
+        this.addListener(cmd.eventName, cmd.listener, {client: this, listener: cmd});
 
-            if (isType<Initialisable, Command<T>>(c, ['initialise'])) {
-                c.initialise(this);
-            }
+        if (isType<Initialisable, Command<T>>(cmd, ['initialise'])) {
+            cmd.initialise(this);
+        }
 
-            this.commands.push(c);
-        });
+        this.commands.push(cmd);
 
         return this;
+    }
+
+    addService(service: Service) {
+        this.services[service.id] = service;
+    }
+
+    getService<T extends Service>(id: symbol): T | undefined {
+        const service = this.services[id];
+        return isServiceType<T>(service, id) ? service : undefined;
     }
 
     private addCoreListeners() {
@@ -56,8 +63,8 @@ class Veikka extends Client {
 
             const domain = this.options.host?.split('.').slice(-2).join('.');
 
-            if (domain && Object.keys(networks).includes(domain)) {
-                networks[domain].onRegistered(this);
+            if (domain && Object.keys(NETWORKS).includes(domain)) {
+                NETWORKS[domain].onRegistered(this);
             } else {
                 this.emit('network services');
             }
