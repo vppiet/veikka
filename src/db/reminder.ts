@@ -1,7 +1,6 @@
 import Database, {Statement} from 'bun:sqlite';
 
-const SCHEMA =
-`CREATE TABLE IF NOT EXISTS reminder(
+const SCHEMA = `CREATE TABLE IF NOT EXISTS reminder(
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     nick TEXT NOT NULL,
     target TEXT NOT NULL,
@@ -22,41 +21,36 @@ interface ReminderRow {
 }
 
 type InsertOneParams = {
-    [P in keyof Omit<ReminderRow, 'id'> as `$${P}`]: ReminderRow[P]
+    [P in keyof Omit<ReminderRow, 'id'> as `$${P}`]: ReminderRow[P];
 };
 
 class ReminderTable {
-    getFutureToDate: Statement<ReminderRow, {$max_epoch: number}[]>;
+    getFutureToDate: Statement<ReminderRow, {$max_epoch: number; $set_timer_ids: string}[]>;
     insertOne: Statement<ReminderRow, InsertOneParams[]>;
     deletePast: Statement<never, never[]>;
-    deleteOne: Statement<never, {
-        $id: number;
-    }[]>;
+    deleteOne: Statement<never, {$id: number}[]>;
 
     constructor(conn: Database) {
         conn.run(SCHEMA);
 
         this.getFutureToDate = conn.query(
             'SELECT id, nick, target, created_at, reminder_datetime, reminder_tz, ' +
-            'reminder_text ' +
-            'FROM reminder ' +
-            'WHERE ' +
-            'reminder_datetime > unixepoch() AND ' +
-            'reminder_datetime < $max_epoch',
+                'reminder_text ' +
+                'FROM reminder ' +
+                'WHERE ' +
+                'reminder_datetime > unixepoch() AND ' +
+                'reminder_datetime < $max_epoch AND ' +
+                'id NOT IN ($set_timer_ids)'
         );
         this.insertOne = conn.query(
             'INSERT INTO reminder(nick, target, created_at, reminder_datetime, ' +
-            'reminder_tz, reminder_text) ' +
-            'VALUES ($nick, $target, $created_at, $reminder_datetime, $reminder_tz, ' +
-            '$reminder_text) ' +
-            'RETURNING *',
+                'reminder_tz, reminder_text) ' +
+                'VALUES ($nick, $target, $created_at, $reminder_datetime, $reminder_tz, ' +
+                '$reminder_text) ' +
+                'RETURNING *'
         );
-        this.deletePast = conn.query(
-            'DELETE FROM reminder WHERE unixepoch() >= reminder_datetime',
-        );
-        this.deleteOne = conn.query(
-            'DELETE FROM reminder WHERE id = $id',
-        );
+        this.deletePast = conn.query('DELETE FROM reminder WHERE unixepoch() >= reminder_datetime');
+        this.deleteOne = conn.query('DELETE FROM reminder WHERE id = $id');
     }
 
     finalizeAll() {
