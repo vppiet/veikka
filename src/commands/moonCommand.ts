@@ -1,4 +1,4 @@
-import {format, isBefore, isValid} from 'date-fns';
+import {format, isBefore, isValid, startOfDay} from 'date-fns';
 import {PrivMsgEvent} from 'irc-framework';
 
 import {Body, Observer, SearchRiseSet} from 'astronomy-engine';
@@ -41,14 +41,15 @@ class MoonCommand extends Command<[Date | undefined, string | undefined]> {
             const {name, country, latitude, longitude, elevation} = locationResult.value;
             const observer = new Observer(latitude, longitude, elevation);
 
-            const moonRiseSearch = SearchRiseSet(Body.Moon, observer, 1, date, 1);
+            const beginOfDay = startOfDay(date);
+            const moonRiseSearch = SearchRiseSet(Body.Moon, observer, 1, beginOfDay, 1);
             const moonRise = {
                 symbol: UP_ARROW,
                 date: moonRiseSearch?.date ?? new Date(NaN),
                 dateString: '',
             };
 
-            const moonSetSearch = SearchRiseSet(Body.Moon, observer, -1, date, 1);
+            const moonSetSearch = SearchRiseSet(Body.Moon, observer, -1, beginOfDay, 1);
             const moonSet = {
                 symbol: DOWN_ARROW,
                 date: moonSetSearch?.date ?? new Date(NaN),
@@ -62,11 +63,12 @@ class MoonCommand extends Command<[Date | undefined, string | undefined]> {
 
                 return 0;
             });
+
             moonRiseSetArr.forEach((e) => {
                 if (isValid(e.date)) {
                     e.dateString = format(e.date, 'H:mm');
                 } else {
-                    e.dateString = 'Error';
+                    e.dateString = '-';
                 }
             });
 
