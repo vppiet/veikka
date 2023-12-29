@@ -40,4 +40,6 @@ veikka.connect({
     port: Number(Bun.env.SERVER_PORT) || 6667,
     auto_reconnect_max_retries: 30,
     auto_reconnect_max_wait: 2 * INTERVAL.MINUTE,
+    ping_interval: 30,
+    ping_timeout: 300,
 });

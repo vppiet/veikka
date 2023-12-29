@@ -1,5 +1,12 @@
 import {Database} from 'bun:sqlite';
-import {Channel, Client, IrcClientOptions, JoinEvent, RegisteredEvent} from 'irc-framework';
+import {
+    Channel,
+    Client,
+    IrcClientOptions,
+    JoinEvent,
+    NickInUseEvent,
+    RegisteredEvent,
+} from 'irc-framework';
 import {Logger} from 'winston';
 
 import {Command} from './command';
@@ -97,12 +104,28 @@ class Veikka extends Client {
                 });
         });
 
-        this.on('nick in use', () => {
-            this.logger.debug('this.user BEFORE NICK CHANGE: %o', this.user);
+        const nickPostfixes = ['_', '-', '^'];
+        let postFixIndex = 0;
 
-            const altNick = this.user.nick + '_';
+        this.on('nick in use', (event: NickInUseEvent) => {
+            if (postFixIndex === nickPostfixes.length - 1) {
+                this.quit();
+            }
+
+            const lastChar = event.nick[event.nick.length - 1];
+            const i = nickPostfixes.indexOf(lastChar);
+            let altNick = event.nick;
+
+            if (i === -1) {
+                altNick += nickPostfixes[0];
+            } else {
+                altNick = event.nick.slice(0, event.nick.length - 1) + nickPostfixes[postFixIndex];
+            }
+
+            postFixIndex++;
+
+            this.logger.info('Requesting nick change to ' + altNick);
             this.changeNick(altNick);
-            this.logger.info('Requested nick change to ' + altNick);
         });
     }
 }
