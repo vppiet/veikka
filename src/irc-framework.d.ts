@@ -22,7 +22,7 @@ declare module 'irc-framework' {
         account?: {
             account: string;
             password: string;
-        },
+        };
         webirc?: {
             password: string;
             username: string;
@@ -32,12 +32,12 @@ declare module 'irc-framework' {
                 secure?: boolean;
                 'local-port'?: number;
                 'remote-port'?: number;
-            },
-        },
+            };
+        };
         client_certificate?: {
             private_key: string;
             certificate: string;
-        },
+        };
     }
 
     export interface User {
@@ -63,7 +63,7 @@ declare module 'irc-framework' {
         name: string;
         say(message: string, tags?: Tags): void;
         notice(message: string, tags?: Tags): void;
-        part(message: string): void
+        part(message: string): void;
         join(key?: string): void;
         mode(mode: string, extra_args?: unknown[]): void;
         banlist(cb?: (event: BanListEvent) => void): void;
@@ -73,11 +73,77 @@ declare module 'irc-framework' {
 
     type Tags = Record<string, string>;
 
-    type EventType = 'registered' | 'connected' | 'reconnecting' | 'close' | 'socket close' | 'socket connected' | 'raw socket connected' | 'server options' | 'raw' | 'unknown command' | 'debug' | 'channel info' | 'channel list start' | 'channel list' | 'channel list end'   | 'wholist' | 'userlist' | 'invitelist' | 'banlist' | 'exceptlist' | 'topic' | 'topicsetby' | 'join' | 'part' | 'kick' | 'quit' | 'invited' | 'message' | 'notice' | 'action' | 'privmsg' | 'tagmsg' | 'ctcp response' | 'ctcp request' | 'wallops' | 'nick' | 'account' | 'user info' | 'away' | 'back' | 'monitorlist' | 'nick in use' | 'nick invalid' | 'user online' | 'user offline' | 'whois' | 'whowas' | 'user updated' | 'motd' | 'info' | 'help' | 'batch start' | 'batch end' | 'cap ls' | 'cap ack' | 'cap nak' | 'cap list' | 'cap new' | 'cap del' | 'loggedin' | 'loggedout' | 'sasl failed';
+    type EventType =
+        | 'registered'
+        | 'connected'
+        | 'reconnecting'
+        | 'close'
+        | 'socket close'
+        | 'socket connected'
+        | 'raw socket connected'
+        | 'server options'
+        | 'raw'
+        | 'unknown command'
+        | 'debug'
+        | 'channel info'
+        | 'channel list start'
+        | 'channel list'
+        | 'channel list end'
+        | 'wholist'
+        | 'userlist'
+        | 'invitelist'
+        | 'banlist'
+        | 'exceptlist'
+        | 'topic'
+        | 'topicsetby'
+        | 'join'
+        | 'part'
+        | 'kick'
+        | 'quit'
+        | 'invited'
+        | 'message'
+        | 'notice'
+        | 'action'
+        | 'privmsg'
+        | 'tagmsg'
+        | 'ctcp response'
+        | 'ctcp request'
+        | 'wallops'
+        | 'nick'
+        | 'account'
+        | 'user info'
+        | 'away'
+        | 'back'
+        | 'monitorlist'
+        | 'nick in use'
+        | 'nick invalid'
+        | 'user online'
+        | 'user offline'
+        | 'whois'
+        | 'whowas'
+        | 'user updated'
+        | 'motd'
+        | 'info'
+        | 'help'
+        | 'batch start'
+        | 'batch end'
+        | 'cap ls'
+        | 'cap ack'
+        | 'cap nak'
+        | 'cap list'
+        | 'cap new'
+        | 'cap del'
+        | 'loggedin'
+        | 'loggedout'
+        | 'sasl failed';
 
-    export interface RegisteredEvent {nick: string, tags: Tags}
+    export interface RegisteredEvent {
+        nick: string;
+        tags: Tags;
+    }
 
-    interface WhoisEvent { // TODO: have to check what properties are common
+    interface WhoisEvent {
+        // TODO: have to check what properties are common
         away: string;
         nick: string;
         ident: string;
@@ -241,13 +307,38 @@ declare module 'irc-framework' {
         account?: string;
     }
 
-    export type IrcEvent = RegisteredEvent | WhoisEvent | WhoWasEvent | InviteListEvent | BanListEvent | MonitorListEvent | WhoListEvent | CtcpResponseEvent | NoticeEvent | ActionEvent | CtcpRequestEvent     | PrivMsgEvent | TagMsgEvent | WallopsEvent | JoinEvent;
+    export interface NickInUseEvent {
+        nick: string;
+        reason: string;
+    }
+
+    export type IrcEvent =
+        | RegisteredEvent
+        | WhoisEvent
+        | WhoWasEvent
+        | InviteListEvent
+        | BanListEvent
+        | MonitorListEvent
+        | WhoListEvent
+        | CtcpResponseEvent
+        | NoticeEvent
+        | ActionEvent
+        | CtcpRequestEvent
+        | PrivMsgEvent
+        | TagMsgEvent
+        | WallopsEvent
+        | JoinEvent;
 
     export interface MiddlewareHandler {
         use<T extends unknown[]>(middleware: (...args: [...T, (err?: Error) => void]) => void): void;
     }
 
-    export type IrcMiddleware = (command: string, event: IrcEvent, client: Client, next: (err: Error) => void) => void;
+    export type IrcMiddleware = (
+        command: string,
+        event: IrcEvent,
+        client: Client,
+        next: (err: Error) => void
+    ) => void;
     export type Handler<T extends IrcEvent> = (command: string, event: T) => void;
 
     export class Client extends EventEmitter {
@@ -256,7 +347,13 @@ declare module 'irc-framework' {
         connected: boolean;
         user: User;
         requestCap(cap: string | string[]): void;
-        use<T extends Client>(middleware_fn: (client: T, rawEvents: MiddlewareHandler, parsed_events: MiddlewareHandler) => void): this;
+        use<T extends Client>(
+            middleware_fn: (
+                client: T,
+                rawEvents: MiddlewareHandler,
+                parsed_events: MiddlewareHandler
+            ) => void
+        ): this;
         connect(options?: IrcClientOptions): void;
         raw(raw_data_line: string): void;
         rawString(...input: string[]): string;
@@ -292,13 +389,41 @@ declare module 'irc-framework' {
         clearMonitor(): void;
         list(...args: string[]): void;
         channel(channel_name: string): Channel;
-        match(match_regex: RegExp, cb: (event: CtcpResponseEvent) => void, message_type: 'ctcp response'): {stop(): void};
-        match(match_regex: RegExp, cb: (event: NoticeEvent) => void, message_type: 'notice'): {stop(): void};
-        match(match_regex: RegExp, cb: (event: ActionEvent) => void, message_type: 'action'): {stop(): void};
-        match(match_regex: RegExp, cb: (event: CtcpRequestEvent) => void, message_type: 'ctcp request'): {stop(): void};
-        match(match_regex: RegExp, cb: (event: PrivMsgEvent) => void, message_type: 'privmsg'): {stop(): void};
-        match(match_regex: RegExp, cb: (event: TagMsgEvent) => void, message_type: 'tagmsg'): {stop(): void};
-        match(match_regex: RegExp, cb: (event: WallopsEvent) => void, message_type: 'wallops'): {stop(): void};
+        match(
+            match_regex: RegExp,
+            cb: (event: CtcpResponseEvent) => void,
+            message_type: 'ctcp response'
+        ): {stop(): void};
+        match(
+            match_regex: RegExp,
+            cb: (event: NoticeEvent) => void,
+            message_type: 'notice'
+        ): {stop(): void};
+        match(
+            match_regex: RegExp,
+            cb: (event: ActionEvent) => void,
+            message_type: 'action'
+        ): {stop(): void};
+        match(
+            match_regex: RegExp,
+            cb: (event: CtcpRequestEvent) => void,
+            message_type: 'ctcp request'
+        ): {stop(): void};
+        match(
+            match_regex: RegExp,
+            cb: (event: PrivMsgEvent) => void,
+            message_type: 'privmsg'
+        ): {stop(): void};
+        match(
+            match_regex: RegExp,
+            cb: (event: TagMsgEvent) => void,
+            message_type: 'tagmsg'
+        ): {stop(): void};
+        match(
+            match_regex: RegExp,
+            cb: (event: WallopsEvent) => void,
+            message_type: 'wallops'
+        ): {stop(): void};
         matchNotice(match_regex: RegExp, cb: (event: IrcMessage) => void): {stop(): void};
         matchMessage(match_regex: RegExp, cb: (event: IrcMessage) => void): {stop(): void};
         matchAction(match_regex: RegExp, cb: (event: unknown) => void): {stop(): void};

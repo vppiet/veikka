@@ -1,15 +1,12 @@
 import {Database} from 'bun:sqlite';
-import {
-    Channel, Client, IrcClientOptions,
-    JoinEvent, RegisteredEvent
-} from 'irc-framework';
+import {Channel, Client, IrcClientOptions, JoinEvent, RegisteredEvent} from 'irc-framework';
 import {Logger} from 'winston';
 
 import {Command} from './command';
 import {getLogger} from './logger';
 import NETWORKS from './network';
 import {Service} from './service';
-import {Closeable, Initialisable, isServiceType, isType} from './util';
+import {Closeable, isCloseable, isInitialisable, isServiceType} from './util';
 
 class Veikka extends Client {
     logger: Logger;
@@ -30,15 +27,16 @@ class Veikka extends Client {
         db.exec('PRAGMA journal_mode = WAL;');
         db.exec('PRAGMA foreign_keys = ON;');
 
-        process.on('exit', () => { db.close(); });
+        process.on('exit', () => {
+            db.close();
+        });
 
         return new Veikka(db, options);
     }
 
     addCommand<T extends unknown[]>(cmd: Command<T>) {
         this.addListener(cmd.eventName, cmd.listener, {client: this, listener: cmd});
-
-        if (isType<Initialisable, Command<T>>(cmd, ['initialise'])) {
+        if (isInitialisable(cmd)) {
             cmd.initialise(this);
         }
 
@@ -71,7 +69,9 @@ class Veikka extends Client {
         });
 
         const networkServicesListener = () => {
-            Bun.env.SERVER_AUTOJOIN?.split(', ').forEach((c) => { this.join(c); });
+            Bun.env.SERVER_AUTOJOIN?.split(', ').forEach((c) => {
+                this.join(c);
+            });
             this.removeListener('network services', networkServicesListener);
         };
 
@@ -91,8 +91,18 @@ class Veikka extends Client {
             this.logger.info(`Socket closed`);
             this.channels = [];
             this.commands
-                .filter((c): c is Command<unknown[]> & Closeable => isType(c, ['close']))
-                .forEach((c) => { c.close(this); });
+                .filter((c): c is Command<unknown[]> & Closeable => isCloseable(c))
+                .forEach((c) => {
+                    c.close(this);
+                });
+        });
+
+        this.on('nick in use', () => {
+            this.logger.debug('this.user BEFORE NICK CHANGE: %o', this.user);
+
+            const altNick = this.user.nick + '_';
+            this.changeNick(altNick);
+            this.logger.info('Requested nick change to ' + altNick);
         });
     }
 }

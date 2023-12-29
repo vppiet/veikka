@@ -1,22 +1,24 @@
-import Database from "bun:sqlite";
-import {Service} from "../service";
+import {Service} from '../service';
+import {Location, getGeoCoding} from './externalAPIs/openMeteo';
 
 const LOCATION_SERVICE_ID = Symbol('location');
 
 class LocationService implements Service {
     id: symbol = LOCATION_SERVICE_ID;
-    conn: Database; // TODO: location table
 
-    constructor(conn: Database) {
-        this.conn = conn;
-    }
+    async getLocation(name: string): Promise<{value: Location} | {error: string}> {
+        const r = await getGeoCoding(name);
 
-    initialise(): void {
-        throw new Error("Method not implemented.");
-    }
+        if ('error' in r) {
+            return {error: `Sisäinen virhe :< (${r.error})`};
+        }
 
-    close(): void {
-        throw new Error("Method not implemented.");
+        if (!r.value.results.length) {
+            return {error: 'Paikkaa ei löydetty'};
+        }
+
+        // assume the first location is the best match
+        return {value: r.value.results[0]};
     }
 }
 

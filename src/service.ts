@@ -1,6 +1,4 @@
-import {Closeable, Initialisable} from "./util";
-
-interface Service extends Initialisable, Closeable {
+interface Service {
     id: symbol;
 }
 

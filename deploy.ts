@@ -18,9 +18,10 @@ const db = veikka.db;
 
 veikka.use(new LogMiddleware().middleware());
 
-veikka.addService(new LocationService(db));
+veikka.addService(new LocationService());
 
-veikka.addCommand(new HelpCommand())
+veikka
+    .addCommand(new HelpCommand())
     .addCommand(new QuitCommand())
     .addCommand(new JoinCommand())
     .addCommand(new ReminderCommand(db))

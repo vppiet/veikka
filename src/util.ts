@@ -25,8 +25,19 @@ function isType<T extends object, U extends object>(o: U, props: string[]): o is
     return props.every((p) => p in o);
 }
 
-function isEventType<T extends IrcEvent>(actualCmd: string, expectedCmd: string,
-    event: IrcEvent): event is T {
+function isInitialisable<T extends object>(o: T): o is T & Initialisable {
+    return isType<Initialisable, T>(o, ['initialise']);
+}
+
+function isCloseable<T extends object>(o: T): o is T & Closeable {
+    return isType<Closeable, T>(o, ['close']);
+}
+
+function isEventType<T extends IrcEvent>(
+    actualCmd: string,
+    expectedCmd: string,
+    event: IrcEvent
+): event is T {
     return actualCmd.toLowerCase() === expectedCmd.toLowerCase();
 }
 
@@ -34,10 +45,10 @@ function isServiceType<T extends Service>(s: Service | undefined, id: symbol): s
     return s !== undefined && s.id === id;
 }
 
-function useParsedEvents(handler: (command: string, event: IrcEvent, client: Veikka,
-    next: (err?: Error) => void) => void) {
-    return function(client: Veikka, rawEvents: MiddlewareHandler,
-        parsedEvents: MiddlewareHandler) {
+function useParsedEvents(
+    handler: (command: string, event: IrcEvent, client: Veikka, next: (err?: Error) => void) => void
+) {
+    return function (client: Veikka, rawEvents: MiddlewareHandler, parsedEvents: MiddlewareHandler) {
         parsedEvents.use(handler);
     };
 }
@@ -57,7 +68,7 @@ function finalizeAll(stmts: Record<string, Statement>) {
 }
 
 function peek<T>(arr: T[], i: number) {
-    return arr[i+1];
+    return arr[i + 1];
 }
 
 async function getCacheDir() {
@@ -88,8 +99,9 @@ function objectKeys<T extends object>(obj: T): (keyof T)[] {
 
 function assertObject<T extends object>(obj: object, prop: string): asserts obj is T {
     if (!(prop in obj)) {
-        throw new Error('Assertion failed:' +
-        ` ${JSON.stringify(obj)} does not have "${prop}" property`);
+        throw new Error(
+            'Assertion failed:' + ` ${JSON.stringify(obj)} does not have "${prop}" property`
+        );
     }
 }
 
@@ -97,8 +109,24 @@ const UP_ARROW = '\u2191';
 const DOWN_ARROW = '\u2193';
 
 export {
-    Closeable, Context, DOWN_ARROW, Initialisable, PropertyValue, UP_ARROW,
-    assertObject, capitalize,
-    finalizeAll, getCacheDir, isAdmin, isEventType,
-    isNumber, isServiceType, isType, objectKeys, peek, useParsedEvents
+    Closeable,
+    Context,
+    DOWN_ARROW,
+    Initialisable,
+    PropertyValue,
+    UP_ARROW,
+    assertObject,
+    capitalize,
+    finalizeAll,
+    getCacheDir,
+    isAdmin,
+    isCloseable,
+    isEventType,
+    isInitialisable,
+    isNumber,
+    isServiceType,
+    isType,
+    objectKeys,
+    peek,
+    useParsedEvents,
 };
