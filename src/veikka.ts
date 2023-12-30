@@ -62,7 +62,13 @@ class Veikka extends Client {
     }
 
     private addCoreListeners() {
+        // alternative nick
+        const nickPostfixes = ['_', '-', '^'];
+        let postFixIndex = 0;
+
         this.on('registered', (event: RegisteredEvent) => {
+            postFixIndex = 0;
+
             this.on('network services', networkServicesListener);
             this.logger.info(`Registered as ${event.nick}`);
 
@@ -103,9 +109,6 @@ class Veikka extends Client {
                     c.close(this);
                 });
         });
-
-        const nickPostfixes = ['_', '-', '^'];
-        let postFixIndex = 0;
 
         this.on('nick in use', (event: NickInUseEvent) => {
             if (postFixIndex === nickPostfixes.length - 1) {

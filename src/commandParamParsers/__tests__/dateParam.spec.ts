@@ -3,8 +3,11 @@ import {afterAll, beforeAll, describe, expect, setSystemTime, test} from 'bun:te
 import {ParamParseSuccess} from '../../commandParam';
 import {assertObject} from '../../util';
 import {
-    parseDateTime, parseDayDelta, parseDayDeltaWithTime,
-    parseDuration, parseTime
+    parseDateTime,
+    parseDayDelta,
+    parseDayDeltaWithTime,
+    parseDuration,
+    parseTime,
 } from '../dateParam';
 
 const timeZoneBefore = process.env.TZ;
@@ -12,12 +15,13 @@ let referenceDate: Date;
 
 beforeAll(() => {
     process.env.TZ = 'Europe/Helsinki';
-    setSystemTime(new Date('2023-12-17T00:00:00.000Z'));
+    setSystemTime(new Date('2023-12-17T01:02:03.420Z'));
     referenceDate = new Date();
 });
 
 afterAll(() => {
     process.env.TZ = timeZoneBefore;
+    setSystemTime();
 });
 
 describe('dateParam', () => {
@@ -31,6 +35,14 @@ describe('dateParam', () => {
 
     test('datetime, "d.M. klo H"', () => {
         const result = parseDateTime(['15.12.', 'klo', '12'], referenceDate);
+        assertObject<ParamParseSuccess<Date>>(result, 'value');
+
+        expect(result.value.toISOString()).toBe('2023-12-15T10:00:00.000Z');
+        expect(result.consumed).toEqual(['15.12.', 'klo', '12']);
+    });
+
+    test('datetime, "d.M. klo H with trailing string"', () => {
+        const result = parseDateTime(['15.12.', 'klo', '12', 'trailing'], referenceDate);
         assertObject<ParamParseSuccess<Date>>(result, 'value');
 
         expect(result.value.toISOString()).toBe('2023-12-15T10:00:00.000Z');
@@ -131,7 +143,7 @@ describe('dateParam', () => {
         const result = parseDayDelta(['huomenna'], referenceDate);
         assertObject<ParamParseSuccess<Date>>(result, 'value');
 
-        expect(result.value.toISOString()).toStartWith('2023-12-18T00:00');
+        expect(result.value.toISOString()).toBe('2023-12-17T22:00:00.000Z');
         expect(result.consumed).toEqual(['huomenna']);
     });
 
@@ -139,7 +151,7 @@ describe('dateParam', () => {
         const result = parseDayDelta(['eilen'], referenceDate);
         assertObject<ParamParseSuccess<Date>>(result, 'value');
 
-        expect(result.value.toISOString()).toStartWith('2023-12-16T00:00');
+        expect(result.value.toISOString()).toBe('2023-12-15T22:00:00.000Z');
         expect(result.consumed).toEqual(['eilen']);
     });
 
@@ -147,15 +159,12 @@ describe('dateParam', () => {
         const result = parseDayDeltaWithTime(['huomenna', 'klo', '10:20'], referenceDate);
         assertObject<ParamParseSuccess<Date>>(result, 'value');
 
-        expect(result.value.toISOString()).toStartWith('2023-12-18T08:20');
+        expect(result.value.toISOString()).toBe('2023-12-18T08:20:00.000Z');
         expect(result.consumed).toEqual(['huomenna', 'klo', '10:20']);
     });
 
     test('day delta with invalid time', () => {
         const result = parseDayDeltaWithTime(['huomenna', 'klo', '33:20'], referenceDate);
-        assertObject<ParamParseSuccess<Date>>(result, 'value');
-
-        expect(result.value.toISOString()).toStartWith('2023-12-18T00:00');
-        expect(result.consumed).toEqual(['huomenna']);
+        expect(result).toHaveProperty('error');
     });
 });

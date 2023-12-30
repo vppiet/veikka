@@ -312,6 +312,11 @@ declare module 'irc-framework' {
         reason: string;
     }
 
+    export interface RawEvent {
+        line: string;
+        from_server: boolean;
+    }
+
     export type IrcEvent =
         | RegisteredEvent
         | WhoisEvent
@@ -327,7 +332,9 @@ declare module 'irc-framework' {
         | PrivMsgEvent
         | TagMsgEvent
         | WallopsEvent
-        | JoinEvent;
+        | JoinEvent
+        | NickInUseEvent
+        | RawEvent;
 
     export interface MiddlewareHandler {
         use<T extends unknown[]>(middleware: (...args: [...T, (err?: Error) => void]) => void): void;

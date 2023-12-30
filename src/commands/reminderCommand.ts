@@ -161,12 +161,9 @@ const datetimeParam: CommandParam<Date> = {
     required: true,
     parse: function (parts: string[]) {
         const now = new Date();
-        const zeroSecNow = new Date(now);
-        zeroSecNow.setSeconds(0);
-        zeroSecNow.setMilliseconds(0);
 
         // datetime & daydelta
-        const datetimeResult = parseDateTimeOrDayDelta(parts, zeroSecNow);
+        const datetimeResult = parseDateTimeOrDayDelta(parts, now);
         if ('value' in datetimeResult) {
             return datetimeResult;
         }

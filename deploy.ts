@@ -7,7 +7,6 @@ import {MoonCommand} from './src/commands/moonCommand';
 import {PoemMetreCommand} from './src/commands/poemMetreCommand';
 import {QuitCommand} from './src/commands/quitCommand';
 import {ReminderCommand} from './src/commands/reminderCommand';
-import {INTERVAL} from './src/commands/resources/time';
 import {CurrentWeatherCommand} from './src/commands/weatherCommand';
 import {LogMiddleware} from './src/middlewares/logMiddleware';
 import {LocationService} from './src/services/locationService';
@@ -38,8 +37,4 @@ veikka.connect({
     gecos: Bun.env.GECOS,
     host: Bun.env.SERVER_HOST,
     port: Number(Bun.env.SERVER_PORT) || 6667,
-    auto_reconnect_max_retries: 30,
-    auto_reconnect_max_wait: 2 * INTERVAL.MINUTE,
-    ping_interval: 30,
-    ping_timeout: 300,
 });

@@ -1,8 +1,8 @@
-import {addDays, isValid, parse} from "date-fns";
+import {addDays, isValid, parse, startOfDay} from 'date-fns';
 
-import {ARG_SEP} from "../command";
-import {ParserFn} from "../commandParam";
-import {isNumber, objectKeys} from "../util";
+import {ARG_SEP} from '../command';
+import {ParserFn} from '../commandParam';
+import {isNumber, objectKeys} from '../util';
 
 const FI_DURATION_MAP: Readonly<Record<keyof Duration, string[]>> = {
     years: ['vuosi', 'vuotta', 'v'],
@@ -51,14 +51,14 @@ const parseDuration: ParserFn<Duration> = (parts: string[]) => {
     return {value, consumed};
 };
 
-const DATETIME_FORMATS: readonly {regex: RegExp, strings: string[]}[] = [
+const DATETIME_FORMATS: readonly {regex: RegExp; strings: string[]}[] = [
     {
         regex: /^\d{1,2}\.\d{1,2}\.$/,
-        strings: ['d.M. \'klo\' H:mm', 'd.M. \'klo\' H', 'd.M. H:mm', 'd.M.',],
+        strings: ["d.M. 'klo' H:mm", "d.M. 'klo' H", 'd.M. H:mm', 'd.M.'],
     },
     {
         regex: /^\d{1,2}\.\d{1,2}\.\d{1,4}$/,
-        strings: ['d.M.yyyy \'klo\' H', 'd.M.yyyy \'klo\' H:mm', 'd.M.yyyy H:mm', 'd.M.yyyy'],
+        strings: ["d.M.yyyy 'klo' H", "d.M.yyyy 'klo' H:mm", 'd.M.yyyy H:mm', 'd.M.yyyy'],
     },
 ];
 
@@ -66,7 +66,6 @@ const parseDateTime: ParserFn<Date, [Date]> = (parts: string[], referenceDate: D
     const firstPart = parts[0];
 
     for (const FORMAT of DATETIME_FORMATS) {
-        // datetime formats
         if (FORMAT.regex.test(firstPart)) {
             for (const strFormat of FORMAT.strings) {
                 const partCount = strFormat.split(ARG_SEP).length;
@@ -74,7 +73,7 @@ const parseDateTime: ParserFn<Date, [Date]> = (parts: string[], referenceDate: D
                 const dateString = dateParts.join(ARG_SEP);
                 const result = parse(dateString, strFormat, referenceDate);
 
-                if (isValid(result.getTime())) {
+                if (isValid(result)) {
                     return {value: result, consumed: dateParts};
                 }
             }
@@ -93,26 +92,27 @@ function getDurationKeyFromMap(str: string): keyof typeof FI_DURATION_MAP | unde
 }
 
 const DAY_DELTAS: Readonly<Record<string, number>> = {
-    'eilen': -1,
-    'tänään': 0,
-    'huomenna': 1,
-    'ylihuomenna': 2,
+    eilen: -1,
+    tänään: 0,
+    huomenna: 1,
+    ylihuomenna: 2,
 };
 
 const parseDayDelta: ParserFn<Date, [Date]> = (parts: string[], referenceDate: Date) => {
+    const beginOfDay = startOfDay(referenceDate);
     const deltaName = parts[0];
 
     if (deltaName in DAY_DELTAS) {
         const deltaValue = DAY_DELTAS[deltaName];
-        const date = addDays(referenceDate, deltaValue);
+        const date = addDays(beginOfDay, deltaValue);
 
         return {value: date, consumed: [parts[0]]};
     }
 
     return {error: 'Could not parse day delta'};
-}
+};
 
-const TIME_24H_FORMATS = ['H:mm', '\'klo\' H:mm'];
+const TIME_24H_FORMATS = ['H', 'H:mm', "'klo' H", "'klo' H:mm"];
 
 const parseTime: ParserFn<Date, [Date]> = (parts: string[], referenceDate: Date) => {
     for (const FORMAT of TIME_24H_FORMATS) {
@@ -141,8 +141,12 @@ const parseDayDeltaWithTime: ParserFn<Date, [Date]> = (parts: string[], referenc
     const date = dayDeltaResult.value;
 
     const timeParts = parts.slice(dayDeltaResult.consumed.length);
-    if (timeParts.length) {
+    if (timeParts.length && timeParts[0] === 'klo') {
         const timeResult = parseTime(timeParts, date);
+
+        if ('error' in timeResult) {
+            return {error: timeResult.error};
+        }
 
         if ('value' in timeResult && isValid(timeResult.value)) {
             // ignore parse error
@@ -157,7 +161,7 @@ const parseDayDeltaWithTime: ParserFn<Date, [Date]> = (parts: string[], referenc
     }
 
     return {value: date, consumed};
-}
+};
 
 const parseDateTimeOrDayDelta: ParserFn<Date, [Date]> = (parts: string[], referenceDate: Date) => {
     const dayDeltaResult = parseDayDeltaWithTime(parts, referenceDate);
@@ -171,7 +175,7 @@ const parseDateTimeOrDayDelta: ParserFn<Date, [Date]> = (parts: string[], refere
     }
 
     return {error: 'Could not parse day delta or date time'};
-}
+};
 
 export {
     parseDateTime,
@@ -179,5 +183,5 @@ export {
     parseDayDelta,
     parseDayDeltaWithTime,
     parseDuration,
-    parseTime
+    parseTime,
 };
