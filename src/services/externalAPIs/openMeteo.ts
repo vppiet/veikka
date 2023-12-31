@@ -1,7 +1,9 @@
+import {isType} from '../../util';
+
 const GEO_BASE_URL = 'https://geocoding-api.open-meteo.com/v1/search';
 
 interface GeoCodingResponse {
-    results: Location[];
+    results?: Location[];
     generationtime_ms: number;
 }
 
@@ -11,24 +13,25 @@ interface Location {
     latitude: number;
     longitude: number;
     elevation: number;
-    timezone: string;
     feature_code: string;
     country_code: string;
-    country: string;
-    population: number;
-    postcodes?: string[];
-    admin1: string;
-    admin2: string;
-    admin3?: string;
-    admin4?: string;
-    admin1_id: number;
-    admin2_id: number;
+    admin1_id?: number;
+    admin2_id?: number;
     admin3_id?: number;
     admin4_id?: number;
+    timezone: string;
+    country_id: number;
+    country: string;
+    population?: number;
+    postcodes?: string[];
+    admin1?: string;
+    admin2?: string;
+    admin3?: string;
+    admin4?: string;
 }
 
-async function getGeoCoding(name: string): Promise<{value: GeoCodingResponse} | {error: string}> {
-    const url = `${GEO_BASE_URL}?name=${encodeURIComponent(name)}`;
+async function getGeoCoding(name: string) {
+    const url = `${GEO_BASE_URL}?name=${encodeURIComponent(name)}&count=1&lang=en&format=json`;
     const response = await fetch(url);
     if (!response.ok) {
         return {
@@ -38,10 +41,22 @@ async function getGeoCoding(name: string): Promise<{value: GeoCodingResponse} | 
         };
     }
 
-    const value: GeoCodingResponse = await response.json();
+    const r = await response.json();
+    if (isType<GeoCodingResponse>(r, ['generationtime_ms'])) {
+        return {value: r};
+    }
 
-    return {value};
+    return {error: 'Response body was not of the expected type'};
 }
 
-export {getGeoCoding};
+function decodeGeoCodingResponse(jsonString: string) {
+    const parseResult: unknown = JSON.parse(jsonString);
+    if (isType<GeoCodingResponse>(parseResult, ['generationtime_ms'])) {
+        return {value: parseResult};
+    }
+
+    return {error: 'Decoding error from json string to GeoCodingResponse'};
+}
+
+export {decodeGeoCodingResponse, getGeoCoding};
 export type {GeoCodingResponse, Location};

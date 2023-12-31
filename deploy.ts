@@ -17,7 +17,7 @@ const db = veikka.db;
 
 veikka.use(new LogMiddleware().middleware());
 
-veikka.addService(new LocationService());
+veikka.addService(new LocationService(db));
 
 veikka
     .addCommand(new HelpCommand())

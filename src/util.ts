@@ -21,8 +21,12 @@ interface Closeable {
 
 type PropertyValue<T extends Record<PropertyKey, unknown>> = T[keyof T];
 
-function isType<T extends object, U extends object>(o: U, props: string[]): o is T & U {
-    return props.every((p) => p in o);
+function isType<T, U = unknown>(o: U, props: string[]): o is T & U {
+    if (o && typeof o === 'object') {
+        return props.every((p) => p in o);
+    }
+
+    return false;
 }
 
 function isInitialisable<T extends object>(o: T): o is T & Initialisable {
@@ -48,7 +52,7 @@ function isServiceType<T extends Service>(s: Service | undefined, id: symbol): s
 function useParsedEvents(
     handler: (command: string, event: IrcEvent, client: Veikka, next: (err?: Error) => void) => void
 ) {
-    return function (client: Veikka, rawEvents: MiddlewareHandler, parsedEvents: MiddlewareHandler) {
+    return (client: Veikka, rawEvents: MiddlewareHandler, parsedEvents: MiddlewareHandler) => {
         parsedEvents.use(handler);
     };
 }

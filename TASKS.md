@@ -2,7 +2,10 @@
 
 ## Avoinna
 
--   locationService, openMeteo KESKEN
+-   locationService
+    -   openMeteo OK
+    -   locationTable OK
+    -   palvelu POHJA
 -   .aurinko: tekemättä
 -   Service: palveluhommelit? jotkin komennot riippuvaisia etenkin ulkoisista palveluista
 -   uptime: system+network

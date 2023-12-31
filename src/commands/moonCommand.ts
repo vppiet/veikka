@@ -34,7 +34,7 @@ class MoonCommand extends Command<[Date | undefined, string | undefined]> {
 
             const locationResult = await ls.getLocation(locationParam);
             if ('error' in locationResult) {
-                this.reply(event, `Sisäinen virhe :< (${locationResult.error})`);
+                this.reply(event, `Virhe :< (${locationResult.error})`);
                 return;
             }
 
